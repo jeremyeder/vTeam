@@ -16,7 +16,7 @@ help: ## Show this help message
 	@echo '  make build-all PLATFORM=linux/amd64'
 	@echo '  make build-all BUILD_FLAGS="--no-cache --pull"'
 	@echo '  make build-all CONTAINER_ENGINE=podman PLATFORM=linux/arm64'
-	@echo '  make deploy SERVER=https://api.stc-ai-e1-pp.imap.p1.openshiftapps.com:6443'
+	@echo '  make deploy SERVER=https://api.cluster.example.com:6443'
 	@echo ''
 	@echo 'Targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
