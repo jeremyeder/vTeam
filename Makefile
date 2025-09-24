@@ -9,12 +9,14 @@ help: ## Show this help message
 	@echo '  PLATFORM           Target platform (e.g., linux/amd64, linux/arm64)'
 	@echo '  BUILD_FLAGS        Additional flags to pass to build command'
 	@echo '  REGISTRY           Container registry for push operations'
+	@echo '  SERVER             OpenShift server URL for deployment (optional)'
 	@echo ''
 	@echo 'Examples:'
 	@echo '  make build-all CONTAINER_ENGINE=podman'
 	@echo '  make build-all PLATFORM=linux/amd64'
 	@echo '  make build-all BUILD_FLAGS="--no-cache --pull"'
 	@echo '  make build-all CONTAINER_ENGINE=podman PLATFORM=linux/arm64'
+	@echo '  make deploy SERVER=https://api.cluster.example.com:6443'
 	@echo ''
 	@echo 'Targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-15s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -41,6 +43,9 @@ RUNNER_IMAGE ?= vteam_claude_runner:latest
 # Docker registry operations (customize REGISTRY as needed)
 REGISTRY ?= your-registry.com
 
+# OpenShift server for deployment (optional)
+SERVER ?=
+
 # Build all images
 build-all: build-frontend build-backend build-operator build-runner ## Build all container images
 
@@ -64,7 +69,11 @@ build-runner: ## Build the Claude Code runner container image
 # Kubernetes deployment
 deploy: ## Deploy all components to Kubernetes
 	@echo "Deploying to Kubernetes..."
+ifneq ($(SERVER),)
+	cd components/manifests && ./deploy.sh --server=$(SERVER)
+else
 	cd components/manifests && ./deploy.sh
+endif
 
 # Cleanup
 clean: ## Clean up all Kubernetes resources

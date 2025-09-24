@@ -1,11 +1,18 @@
 #!/bin/bash
 
 # OpenShift Deployment Script for vTeam Ambient Agentic Runner
-# Usage: ./deploy.sh
+# Usage: ./deploy.sh [--server=SERVER_URL]
 # Or with environment variables: NAMESPACE=my-namespace ./deploy.sh
 # Note: This script deploys pre-built images. Build and push images first.
 
 set -e
+
+# Parse command line arguments
+SERVER_URL=""
+if [[ "$1" == --server=* ]]; then
+    SERVER_URL="${1#--server=}"
+    shift
+fi
 
 # Always run from the script's directory (manifests root)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -142,9 +149,15 @@ if [ "${1:-}" = "uninstall" ]; then
         exit 1
     fi
 
-    # Check if logged in to OpenShift
-    if ! oc whoami >/dev/null 2>&1; then
-        echo -e "${RED}❌ Not logged in to OpenShift. Please run 'oc login' first.${NC}"
+    # Handle OpenShift authentication for uninstall
+    if [[ -n "$SERVER_URL" ]]; then
+        echo -e "${BLUE}Logging in to OpenShift server: ${SERVER_URL}${NC}"
+        if ! oc login --server="$SERVER_URL"; then
+            echo -e "${RED}❌ Failed to login to OpenShift server: ${SERVER_URL}${NC}"
+            exit 1
+        fi
+    elif ! oc whoami >/dev/null 2>&1; then
+        echo -e "${RED}❌ Not logged in to OpenShift. Please run 'oc login' first or use --server parameter.${NC}"
         exit 1
     fi
 
@@ -175,8 +188,16 @@ if [ "${1:-}" = "secrets" ]; then
         echo -e "${RED}❌ OpenShift CLI (oc) not found. Please install it first.${NC}"
         exit 1
     fi
-    if ! oc whoami >/dev/null 2>&1; then
-        echo -e "${RED}❌ Not logged in to OpenShift. Please run 'oc login' first.${NC}"
+
+    # Handle OpenShift authentication for secrets subcommand
+    if [[ -n "$SERVER_URL" ]]; then
+        echo -e "${BLUE}Logging in to OpenShift server: ${SERVER_URL}${NC}"
+        if ! oc login --server="$SERVER_URL"; then
+            echo -e "${RED}❌ Failed to login to OpenShift server: ${SERVER_URL}${NC}"
+            exit 1
+        fi
+    elif ! oc whoami >/dev/null 2>&1; then
+        echo -e "${RED}❌ Not logged in to OpenShift. Please run 'oc login' first or use --server parameter.${NC}"
         exit 1
     fi
 
@@ -253,14 +274,24 @@ fi
 echo -e "${GREEN}✅ Prerequisites check passed${NC}"
 echo ""
 
-# Check if logged in to OpenShift
+# Handle OpenShift authentication
 echo -e "${YELLOW}Checking OpenShift authentication...${NC}"
-if ! oc whoami >/dev/null 2>&1; then
-    echo -e "${RED}❌ Not logged in to OpenShift. Please run 'oc login' first.${NC}"
+if [[ -n "$SERVER_URL" ]]; then
+    echo -e "${BLUE}Logging in to OpenShift server: ${SERVER_URL}${NC}"
+    if ! oc login --server="$SERVER_URL"; then
+        echo -e "${RED}❌ Failed to login to OpenShift server: ${SERVER_URL}${NC}"
+        echo -e "${YELLOW}Please ensure the server URL is correct and you have access.${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}✅ Successfully logged in to: ${SERVER_URL}${NC}"
+elif ! oc whoami >/dev/null 2>&1; then
+    echo -e "${RED}❌ Not logged in to OpenShift. Please run 'oc login' first or use --server parameter.${NC}"
     exit 1
 fi
 
 echo -e "${GREEN}✅ Authenticated as: $(oc whoami)${NC}"
+CURRENT_SERVER=$(oc whoami --show-server 2>/dev/null || echo "unknown")
+echo -e "${GREEN}✅ Connected to server: ${CURRENT_SERVER}${NC}"
 echo ""
 
 # Load required environment file
