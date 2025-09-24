@@ -61,14 +61,16 @@ When creating this spec from a user prompt:
 
 ### Primary User Story
 
-As a software development team member, I need a centralized dashboard that shows me the current status of all workflow activities so I can understand what work is available for me to pick up, what's currently in progress, and where bottlenecks might be occurring in our development process.
+As a vTeam UI user, I want to know what step a project is at in its workflow. I want it visualized as a left-column, indicating current status of my current workflow. It should have steps that correspond to the underlying vTeam orchestration phases, like clarify, specify, plan, tasks, implement.
+
+As a vTeam UI user, I can know when there is work at a step that is waiting on my action. This is the "human in the loop" indicator.
 
 ### Acceptance Scenarios
 
-1. **Given** I am logged into the workflow dashboard, **When** I view the left-column workflow status, **Then** I can see the current status of all active workflows with time and cost metrics
+1. **Given** I am logged into the workflow dashboard, **When** I view the left-column workflow status, **Then** I can see the current status of my active workflows with time and cost metrics
 2. **Given** there is pending work assigned to me, **When** I check the notification system, **Then** I see an envelope icon indicating unread messages and can view the details of work waiting for my attention
-3. **Given** I complete a workflow step, **When** the system updates, **Then** the next team member receives a notification that work is ready for handoff
-4. **Given** I am viewing a workflow step, **When** I examine the metadata, **Then** I can see attribution information including time spent, cost incurred, and tools used (e.g., which LLM processed this step)
+3. **Given** I complete a workflow step, **When** the system updates, **Then** the next team member receives a notification that work is ready for handoff. It also updates the workflow status in real-time.
+4. **Given** I am viewing a workflow step, **When** I examine the metadata, **Then** I can see attribution information including time spent, cost incurred, and tools used (e.g., which LLM processed this step), and who completed it.
 
 ### Edge Cases
 
@@ -80,20 +82,19 @@ As a software development team member, I need a centralized dashboard that shows
 
 ### Functional Requirements
 
-- **FR-001**: System MUST display a left-column workflow dashboard showing current status of all active workflows
+- **FR-001**: System MUST display a left-column workflow dashboard showing current status of active workflow
 - **FR-002**: System MUST show what workflow steps are next and what steps are waiting for action
-- **FR-003**: System MUST display per-step metrics including time spent and cost incurred
+- **FR-003**: System MUST display per-step metrics including time spent and cost incurred, as well as in-total.
 - **FR-004**: System MUST show step attribution indicating which team member or system processed each step
 - **FR-005**: System MUST display metadata for each step including tools used (e.g., LLM model information)
-- **FR-006**: System MUST provide a notification system similar to GitHub inbox or Jira kanban board
 - **FR-007**: System MUST display a small envelope icon when there are unread messages or pending work items
 - **FR-008**: Team members MUST be able to view details of work waiting for their attention
 - **FR-009**: System MUST enable seamless work handoffs between team members
 - **FR-010**: System MUST provide real-time updates when workflow status changes
-- **FR-011**: System MUST authenticate users to ensure secure access to workflow information [NEEDS CLARIFICATION: authentication method not specified - SSO, email/password, existing system integration?]
-- **FR-012**: System MUST track workflow interactions between humans and computers [NEEDS CLARIFICATION: specific interaction types and data points to track not detailed]
-- **FR-013**: System MUST handle work assignment conflicts [NEEDS CLARIFICATION: conflict resolution mechanism not specified]
-- **FR-014**: System MUST define data retention policies [NEEDS CLARIFICATION: how long workflow data, metrics, and notifications should be retained]
+- **FR-011**: System MUST authenticate users using existing system integration
+- **FR-012**: System MUST track workflow interactions between humans and computers. For example, we want to know where time is spent in the workflow.
+- **FR-013**: System MUST handle work assignment conflicts. [NEEDS CLARIFICATION: conflict resolution mechanism not specified]
+- **FR-014**: System MUST use existing data retention policies for data, metrics and notifications. If none exists, retain indefinitely.
 
 ### Key Entities *(include if feature involves data)*
 
