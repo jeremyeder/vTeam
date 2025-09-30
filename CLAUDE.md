@@ -12,6 +12,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Architecture
 
+**IMPORTANT: vTeam follows C4 model architecture documentation.**
+
+**Primary Architecture Reference**: `architecture/workspace.dsl`
+
+When working with this codebase:
+1. **Read the architecture first**: Review `architecture/workspace.dsl` and generated diagrams in `architecture/diagrams/`
+2. **Respect component boundaries**: Ensure code changes align with C4 component relationships
+3. **Update architecture when needed**: If adding new containers/components, update `workspace.dsl`
+4. **See**: [architecture/README.md](architecture/README.md) for detailed architecture documentation
+
+### System Architecture (C4 Model)
+
+**System Context**: vTeam is a Kubernetes-native AI automation platform with 4 main containers:
+1. **Frontend** (NextJS) - Web UI for session management
+2. **Backend** (Go) - REST API for Custom Resources
+3. **Operator** (Go) - Kubernetes operator creating Jobs
+4. **Runner** (Python) - AI execution pods with multi-agent capabilities
+
+**Key External Systems**: Anthropic API, Kubernetes/OpenShift, GitHub
+
+**Full Architecture**: See `architecture/workspace.dsl` for complete container, component, and deployment diagrams.
+
 ### RAT System (`demos/rfe-builder/`)
 - **Technology Stack**: Streamlit web application with Python backend
 - **AI Integration**: Anthropic Claude API with Vertex AI support for conversational RFE creation
@@ -22,6 +44,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Technology Stack**: Kubernetes-native with Go backend, NextJS frontend, Python AI service
 - **AI Integration**: Ambient Code AI with MCP server capabilities for browser automation
 - **Architecture**: Microservices with Custom Resources, Operators, and Job execution
+- **C4 Model Reference**: See `architecture/workspace.dsl` for detailed container and component diagrams
 - **Capabilities**: Generic agentic task execution including website analysis, automation, and data processing
 
 ### vTeam Tools (`tools/`)

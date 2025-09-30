@@ -119,3 +119,11 @@ Thumbs.db
 .stories/
 .testplans/
 .spikes/
+
+# C4 Architecture - Generated Diagrams
+# Note: We commit generated diagrams for GitHub preview, but ignore intermediate files
+architecture/diagrams/*.puml
+architecture/diagrams/*.dot
+architecture/diagrams/*.json
+architecture/workspace.json
+architecture/.structurizr/
