@@ -15,23 +15,35 @@
 
 ## Architecture
 
-The platform consists of containerized microservices orchestrated via Kubernetes:
+**Documentation**: [Architecture Overview](docs/architecture/README.md) | [Quick Reference](docs/architecture/QUICK_REFERENCE.md) | [C4 Diagrams](architecture/diagrams/)
 
-| Component | Technology | Description |
-|-----------|------------|-------------|
-| **Frontend** | NextJS + Shadcn | User interface for managing agentic sessions |
-| **Backend API** | Go + Gin | REST API for managing Kubernetes Custom Resources (multi-tenant: projects, sessions, access control) |
-| **Agentic Operator** | Go | Kubernetes operator that watches CRs and creates Jobs |
-| **Claude Code Runner** | Python + Claude Code CLI | Pod that executes AI with multi-agent collaboration capabilities |
+The platform follows a microservices architecture deployed on Kubernetes/OpenShift:
+
+![Architecture Diagram](architecture/diagrams/structurizr-Containers.png)
+
+### Containers
+
+| Container | Technology | Purpose | Deployment |
+|-----------|------------|---------|------------|
+| **Frontend** | NextJS 14, TypeScript, Shadcn UI | User interface for session management | Kubernetes Pod + Route |
+| **Backend API** | Go, Gin Framework, client-go | REST API for Custom Resource management | Kubernetes Pod + Service |
+| **Agentic Operator** | Go, Kubebuilder, controller-runtime | Kubernetes operator orchestrating jobs | Kubernetes Deployment |
+| **Claude Code Runner** | Python, Claude Code CLI, Anthropic SDK | AI execution with multi-agent capabilities | Kubernetes Job (ephemeral) |
 
 ### Agentic Session Flow
 
-1. **Create Session**: User creates agentic session via web UI with task description
-2. **API Processing**: Backend creates `AgenticSession` Custom Resource in Kubernetes
-3. **Job Scheduling**: Operator detects CR and creates Kubernetes Job with runner pod
-4. **AI Execution**: Pod runs Claude Code CLI with multi-agent collaboration for intelligent analysis
-5. **Result Storage**: Analysis results stored back in Custom Resource status
-6. **UI Updates**: Frontend displays real-time progress and completed results
+![Session Creation Flow](architecture/diagrams/structurizr-SessionCreationFlow.png)
+
+1. **User creates new AI session** via Frontend web interface
+2. **Frontend calls Backend API** (POST /api/sessions)
+3. **Backend creates AgenticSession CR** in Kubernetes
+4. **Operator watches CR creation** and creates Kubernetes Job
+5. **Kubernetes schedules Runner pod** with agent configuration
+6. **Runner executes AI tasks** via Anthropic Claude API
+7. **Runner updates session status** in Custom Resource
+8. **Frontend polls for updates** and displays results
+
+**Learn More**: See [System Context](architecture/diagrams/structurizr-SystemContext.png), [Deployment](architecture/diagrams/structurizr-Deployment.png), and [detailed architecture docs](docs/architecture/README.md).
 
 ## Prerequisites
 

@@ -2,11 +2,18 @@
 
 > AI-powered automation system to reduce engineering refinement time and improve ticket quality
 
+## Architecture
+
+- **[Architecture Overview](architecture/README.md)** - System context, containers, components, and deployment
+- **[Quick Reference](architecture/QUICK_REFERENCE.md)** - Single-page developer reference
+- **[Developer Guide](developer-guide/architecture.md)** - Technical deep-dive for contributors
+- **[C4 Diagrams](../architecture/diagrams/)** - Visual architecture diagrams (8 total)
+
 ## Components
 
 ### Ambient Agentic Runner
 - [Setup Guide](ambient-runner/SETUP.md) - Complete setup and deployment guide
-- [API Documentation](ambient-runner/API.md) - REST API reference  
+- [API Documentation](ambient-runner/API.md) - REST API reference
 - [Enhancement Proposals](ambient-runner/proposals/README.md) - Feature proposals and architectural changes
 
 ## Overview
