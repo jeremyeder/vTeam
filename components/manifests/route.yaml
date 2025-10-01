@@ -3,8 +3,11 @@ kind: Route
 metadata:
   name: frontend-route
   labels:
+    paas.redhat.com/appcode: SNOW-012
     app: frontend
+    shard: internal
 spec:
+  host: vteam-frontend-route.apps.int.stc.ai.prod.us-east-1.aws.paas.redhat.com
   to:
     kind: Service
     name: frontend-service

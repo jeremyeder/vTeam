@@ -1,9 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+kind: Role
 metadata:
   name: agenticsessions-aggregate-to-admin
-  labels:
-    rbac.authorization.k8s.io/aggregate-to-admin: "true"
 rules:
 - apiGroups: ["vteam.ambient-code"]
   resources: ["agenticsessions"]
