@@ -1,0 +1,27 @@
+# Example Interactive AgenticSession
+# This manifest creates an interactive session for chat-based interaction
+apiVersion: vteam.ambient-code/v1alpha1
+kind: AgenticSession
+metadata:
+  name: test-session-interactive
+  namespace: vteam-dev
+spec:
+  # Initial prompt to start the conversation
+  prompt: "I'm ready to help. What would you like me to do?"
+
+  # Enable interactive mode for chat
+  interactive: true
+
+  # Longer timeout for interactive sessions
+  timeout: 3600
+
+  llmSettings:
+    model: "claude-sonnet-4-20250514"
+    temperature: 0.7
+    maxTokens: 4096
+
+  # Configure paths for interactive communication
+  paths:
+    workspace: "/workspace"
+    messages: "/sessions/test-session-interactive/messages.json"
+    inbox: "/sessions/test-session-interactive/inbox.jsonl"

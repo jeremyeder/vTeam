@@ -1,0 +1,38 @@
+# Example AgenticSession with Git Configuration
+# This manifest demonstrates how to configure git repositories for the session
+apiVersion: vteam.ambient-code/v1alpha1
+kind: AgenticSession
+metadata:
+  name: test-session-with-git
+  namespace: vteam-dev
+spec:
+  prompt: "Clone the repository and list its contents"
+  interactive: false
+  timeout: 300
+
+  llmSettings:
+    model: "claude-sonnet-4-20250514"
+    temperature: 0.7
+    maxTokens: 4096
+
+  # Git configuration
+  gitConfig:
+    user:
+      name: "vTeam Bot"
+      email: "vteam-bot@example.com"
+
+    # Uncomment and configure if you need authentication
+    # authentication:
+    #   sshKeySecret: "git-ssh-key"
+    #   # OR
+    #   tokenSecret: "git-token"
+
+    repositories:
+      - url: "https://github.com/yourusername/yourrepo.git"
+        branch: "main"
+        clonePath: "workspace/repo"
+
+  # Workspace paths on PVC
+  paths:
+    workspace: "/workspace"
+    messages: "/sessions/test-session-with-git/messages.json"

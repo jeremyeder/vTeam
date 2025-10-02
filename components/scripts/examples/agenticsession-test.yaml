@@ -1,0 +1,22 @@
+# Example AgenticSession for Integration Testing
+# This manifest creates a simple test session to verify the operator is working
+apiVersion: vteam.ambient-code/v1alpha1
+kind: AgenticSession
+metadata:
+  name: test-session-basic
+  namespace: vteam-dev
+spec:
+  # Simple prompt that completes quickly
+  prompt: "echo 'Hello from AgenticSession' && echo 'Testing complete'"
+
+  # Run in non-interactive mode for testing
+  interactive: false
+
+  # Timeout for the session (in seconds)
+  timeout: 120
+
+  # LLM settings
+  llmSettings:
+    model: "claude-sonnet-4-20250514"
+    temperature: 0.7
+    maxTokens: 4096
