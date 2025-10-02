@@ -987,7 +987,7 @@ func ensureRoleBinding(namespace, groupName, role string) error {
 		},
 		RoleRef: rbacv1.RoleRef{
 			APIGroup: "rbac.authorization.k8s.io",
-			Kind:     "ClusterRole",
+			Kind:     "Role",
 			Name:     roleName,
 		},
 		Subjects: []rbacv1.Subject{
