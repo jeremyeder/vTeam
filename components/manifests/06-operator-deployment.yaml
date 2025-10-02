@@ -1,0 +1,67 @@
+# Phase 3: Operator Deployment with MPP Configuration
+# Multi-Project Platform (MPP) supports both single-namespace and multi-namespace modes
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agentic-operator
+  labels:
+    app: agentic-operator
+    app.kubernetes.io/name: agentic-operator
+    app.kubernetes.io/part-of: vteam
+    app.kubernetes.io/component: operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agentic-operator
+  template:
+    metadata:
+      labels:
+        app: agentic-operator
+    spec:
+      serviceAccountName: agentic-operator
+      containers:
+      - name: agentic-operator
+        image: quay.io/ambient_code/vteam_operator:latest
+        imagePullPolicy: Always
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: BACKEND_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        - name: BACKEND_API_URL
+          value: "http://backend-service:8080/api"
+        - name: AMBIENT_CODE_RUNNER_IMAGE
+          value: "quay.io/ambient_code/vteam_claude_runner:latest"
+        - name: IMAGE_PULL_POLICY
+          value: "Always"
+        # MPP Configuration: Controls operator namespace creation behavior
+        # When true, operator creates all resources in its own namespace
+        # When false, operator creates a new namespace for each project
+        - name: SINGLE_NAMESPACE_MODE
+          value: "false"
+        # MPP Configuration: Storage class for operator-created PVCs
+        # Used when creating workspace PVCs for agentic sessions
+        # Operator passes this to the backend when provisioning resources
+        - name: STORAGE_CLASS
+          value: "gp3-csi"
+        resources:
+          requests:
+            cpu: 50m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+        livenessProbe:
+          exec:
+            command:
+            - /bin/sh
+            - -c
+            - "ps aux | grep '[o]perator' || exit 1"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+      restartPolicy: Always
