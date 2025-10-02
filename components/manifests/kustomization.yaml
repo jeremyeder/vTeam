@@ -10,14 +10,14 @@ namespace: ambient-code
 
 # Resources to include in deployment
 resources:
-- namespace.yaml
-- crds
-- rbac
+- 01-namespace.yaml
+- 02-crds.yaml
+- 03-rbac.yaml
+- 04-backend-deployment.yaml
+- 05-frontend-deployment.yaml
+- 06-operator-deployment.yaml
 - route.yaml
 - git-configmap.yaml
-- backend-deployment.yaml
-- frontend-deployment.yaml
-- operator-deployment.yaml
 images:
 - name: quay.io/ambient_code/vteam_backend:latest
   newName: quay.io/ambient_code/vteam_backend
