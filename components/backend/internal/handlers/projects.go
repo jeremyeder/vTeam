@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -96,6 +97,16 @@ func ListProjects(c *gin.Context) {
 
 // CreateProject creates a new Ambient-managed project
 func CreateProject(c *gin.Context) {
+	// Check if running in single-namespace mode
+	if os.Getenv("SINGLE_NAMESPACE_MODE") == "true" {
+		c.JSON(http.StatusNotImplemented, gin.H{
+			"error":   "Project creation disabled in single-namespace mode",
+			"message": "This deployment only supports the namespace: vteam--test1",
+			"contact": "Contact platform administrator to provision additional namespaces",
+		})
+		return
+	}
+
 	reqK8s, _ := middleware.GetK8sClientsForRequest(c)
 	var req types.CreateProjectRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
