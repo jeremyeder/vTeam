@@ -34,6 +34,8 @@ var (
 	imagePullPolicy        corev1.PullPolicy
 	contentServiceImage    string
 	backendNamespace       string
+	singleNamespaceMode    bool
+	storageClass           string
 )
 
 func main() {
@@ -73,14 +75,37 @@ func main() {
 	}
 	imagePullPolicy = corev1.PullPolicy(imagePullPolicyStr)
 
+	// Get single namespace mode setting
+	singleNamespaceMode = os.Getenv("SINGLE_NAMESPACE_MODE") == "true"
+
+	// Get storage class from environment or use default
+	storageClass = os.Getenv("STORAGE_CLASS")
+	if storageClass == "" {
+		storageClass = "gp3-csi"
+	}
+
 	log.Printf("Agentic Session Operator starting in namespace: %s", namespace)
 	log.Printf("Using ambient-code runner image: %s", ambientCodeRunnerImage)
+	if singleNamespaceMode {
+		log.Printf("Running in SINGLE_NAMESPACE_MODE, watching namespace: %s", namespace)
+	}
 
 	// Start watching AgenticSession resources
 	go watchAgenticSessions()
 
 	// Start watching for managed namespaces
-	go watchNamespaces()
+	// Only watch namespaces in multi-namespace mode
+	if !singleNamespaceMode {
+		go watchNamespaces()
+	} else {
+		// Bootstrap single namespace resources
+		if err := ensureProjectWorkspacePVC(namespace); err != nil {
+			log.Fatalf("Failed to ensure workspace PVC: %v", err)
+		}
+		if err := ensureContentService(namespace); err != nil {
+			log.Fatalf("Failed to ensure content service: %v", err)
+		}
+	}
 
 	// Start watching ProjectSettings resources
 	go watchProjectSettings()
@@ -141,34 +166,47 @@ func watchAgenticSessions() {
 	gvr := getAgenticSessionResource()
 
 	for {
-		// Watch AgenticSessions across all namespaces
-		watcher, err := dynamicClient.Resource(gvr).Watch(context.TODO(), v1.ListOptions{})
+		var watcher watch.Interface
+		var err error
+
+		if singleNamespaceMode {
+			watcher, err = dynamicClient.Resource(gvr).Namespace(namespace).Watch(context.TODO(), v1.ListOptions{})
+		} else {
+			watcher, err = dynamicClient.Resource(gvr).Watch(context.TODO(), v1.ListOptions{})
+		}
+
 		if err != nil {
 			log.Printf("Failed to create AgenticSession watcher: %v", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
 
-		log.Println("Watching for AgenticSession events across all namespaces...")
+		if singleNamespaceMode {
+			log.Printf("Watching for AgenticSession events in namespace: %s", namespace)
+		} else {
+			log.Println("Watching for AgenticSession events across all namespaces...")
+		}
 
 		for event := range watcher.ResultChan() {
 			switch event.Type {
 			case watch.Added, watch.Modified:
 				obj := event.Object.(*unstructured.Unstructured)
 
-				// Only process resources in managed namespaces
-				ns := obj.GetNamespace()
-				if ns == "" {
-					continue
-				}
-				nsObj, err := k8sClient.CoreV1().Namespaces().Get(context.TODO(), ns, v1.GetOptions{})
-				if err != nil {
-					log.Printf("Failed to get namespace %s: %v", ns, err)
-					continue
-				}
-				if nsObj.Labels["ambient-code.io/managed"] != "true" {
-					// Skip unmanaged namespaces
-					continue
+				// Only check namespace labels when watching all namespaces
+				if !singleNamespaceMode {
+					ns := obj.GetNamespace()
+					if ns == "" {
+						continue
+					}
+					nsObj, err := k8sClient.CoreV1().Namespaces().Get(context.TODO(), ns, v1.GetOptions{})
+					if err != nil {
+						log.Printf("Failed to get namespace %s: %v", ns, err)
+						continue
+					}
+					if nsObj.Labels["ambient-code.io/managed"] != "true" {
+						// Skip unmanaged namespaces
+						continue
+					}
 				}
 
 				// Add small delay to avoid race conditions with rapid create/delete cycles
@@ -328,6 +366,14 @@ func handleAgenticSessionEvent(obj *unstructured.Unstructured) error {
 					// Annotations: map[string]string{"sidecar.istio.io/inject": "false"},
 				},
 				Spec: corev1.PodSpec{
+					// Pod-level security context
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsNonRoot: boolPtr(true),
+						FSGroup:      int64Ptr(1000),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+					},
 					// Hard anti-race: prefer runner to schedule on same node as ambient-content for RWO PVCs
 					Affinity: &corev1.Affinity{
 						PodAffinity: &corev1.PodAffinity{
@@ -537,7 +583,8 @@ func ensureProjectWorkspacePVC(namespace string) error {
 			Labels:    map[string]string{"app": "ambient-workspace"},
 		},
 		Spec: corev1.PersistentVolumeClaimSpec{
-			AccessModes: []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
+			StorageClassName: &storageClass,
+			AccessModes:      []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce},
 			Resources: corev1.VolumeResourceRequirements{
 				Requests: corev1.ResourceList{
 					corev1.ResourceStorage: resource.MustParse("5Gi"),
@@ -577,6 +624,14 @@ func ensureContentService(namespace string) error {
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: v1.ObjectMeta{Labels: map[string]string{"app": "ambient-content"}},
 				Spec: corev1.PodSpec{
+					// Pod-level security context
+					SecurityContext: &corev1.PodSecurityContext{
+						RunAsNonRoot: boolPtr(true),
+						FSGroup:      int64Ptr(1000),
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
+						},
+					},
 					// Keep content service singleton for RWO PVC; rely on runner job podAffinity (set below) to co-locate with content if needed
 					Containers: []corev1.Container{
 						{
@@ -765,15 +820,26 @@ func watchProjectSettings() {
 	gvr := getProjectSettingsResource()
 
 	for {
-		// Watch across all namespaces for ProjectSettings
-		watcher, err := dynamicClient.Resource(gvr).Watch(context.TODO(), v1.ListOptions{})
+		var watcher watch.Interface
+		var err error
+
+		if singleNamespaceMode {
+			watcher, err = dynamicClient.Resource(gvr).Namespace(namespace).Watch(context.TODO(), v1.ListOptions{})
+		} else {
+			watcher, err = dynamicClient.Resource(gvr).Watch(context.TODO(), v1.ListOptions{})
+		}
+
 		if err != nil {
 			log.Printf("Failed to create ProjectSettings watcher: %v", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
 
-		log.Println("Watching for ProjectSettings events...")
+		if singleNamespaceMode {
+			log.Printf("Watching for ProjectSettings events in namespace: %s", namespace)
+		} else {
+			log.Println("Watching for ProjectSettings events...")
+		}
 
 		for event := range watcher.ResultChan() {
 			switch event.Type {
