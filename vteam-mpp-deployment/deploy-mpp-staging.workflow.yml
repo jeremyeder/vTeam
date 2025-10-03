@@ -1,0 +1,196 @@
+name: Deploy to MPP Staging (vteam--test1)
+
+on:
+  workflow_dispatch:
+    inputs:
+      namespace:
+        description: 'Target namespace'
+        required: false
+        default: 'vteam--test1'
+      verify_only:
+        description: 'Only verify deployment (no changes)'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  deploy-to-mpp-staging:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install OpenShift CLI
+        uses: redhat-actions/oc-installer@v1
+        with:
+          oc_version: 'latest'
+
+      - name: Install Kustomize
+        run: |
+          curl -s "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh" | bash
+          sudo mv kustomize /usr/local/bin/
+
+      - name: Log in to MPP Staging Cluster
+        run: |
+          oc login ${{ secrets.MPP_STAGING_SERVER }} \
+            --token=${{ secrets.MPP_STAGING_TOKEN }} \
+            --insecure-skip-tls-verify
+
+      - name: Verify cluster access
+        run: |
+          echo "Connected to cluster:"
+          oc whoami
+          oc version
+
+      - name: Create namespace if it doesn't exist
+        if: ${{ github.event.inputs.verify_only != 'true' }}
+        run: |
+          NAMESPACE="${{ github.event.inputs.namespace }}"
+
+          if ! oc get namespace "$NAMESPACE" >/dev/null 2>&1; then
+            echo "Creating namespace: $NAMESPACE"
+            oc create namespace "$NAMESPACE"
+
+            # Label namespace for vTeam operator management
+            oc label namespace "$NAMESPACE" \
+              ambient-code.io/managed=true \
+              ambient-code.io/project="$NAMESPACE"
+
+            echo "✅ Namespace created and labeled"
+          else
+            echo "Namespace $NAMESPACE already exists"
+          fi
+
+      - name: Deploy RBAC roles
+        if: ${{ github.event.inputs.verify_only != 'true' }}
+        run: |
+          NAMESPACE="${{ github.event.inputs.namespace }}"
+
+          echo "Deploying RBAC roles to $NAMESPACE..."
+
+          # Deploy each role, replacing namespace placeholder
+          for role in vteam-mpp-deployment/roles/*.yaml; do
+            echo "Applying $(basename $role)..."
+            sed "s/namespace: vteam--test1/namespace: $NAMESPACE/g" "$role" | oc apply -f -
+          done
+
+          echo "✅ RBAC roles deployed"
+
+      - name: Verify RBAC deployment
+        run: |
+          NAMESPACE="${{ github.event.inputs.namespace }}"
+
+          echo "Verifying RBAC roles in $NAMESPACE..."
+          oc get roles -n "$NAMESPACE" | grep ambient-project || echo "⚠️ No ambient-project roles found"
+
+          echo ""
+          echo "Expected roles:"
+          echo "  - ambient-project-admin"
+          echo "  - ambient-project-edit"
+          echo "  - ambient-project-view"
+
+      - name: Check vTeam platform deployment
+        run: |
+          echo "Checking vTeam platform components in ambient-code namespace..."
+
+          if ! oc get namespace ambient-code >/dev/null 2>&1; then
+            echo "⚠️ WARNING: ambient-code namespace does not exist"
+            echo "The vTeam platform must be deployed first. Run: make deploy"
+            exit 1
+          fi
+
+          echo "Checking CRDs..."
+          oc get crd | grep vteam.ambient-code || echo "⚠️ vTeam CRDs not found"
+
+          echo ""
+          echo "Checking platform pods..."
+          oc get pods -n ambient-code
+
+      - name: Create ProjectSettings if needed
+        if: ${{ github.event.inputs.verify_only != 'true' }}
+        run: |
+          NAMESPACE="${{ github.event.inputs.namespace }}"
+
+          if ! oc get projectsettings default -n "$NAMESPACE" >/dev/null 2>&1; then
+            echo "Creating default ProjectSettings..."
+            cat <<EOF | oc apply -f -
+          apiVersion: vteam.ambient-code/v1
+          kind: ProjectSettings
+          metadata:
+            name: default
+            namespace: $NAMESPACE
+          spec:
+            runnerSecretsConfig:
+              secretRefs: []
+          EOF
+            echo "✅ ProjectSettings created"
+          else
+            echo "ProjectSettings already exists"
+          fi
+
+      - name: Deployment summary
+        run: |
+          NAMESPACE="${{ github.event.inputs.namespace }}"
+
+          echo ""
+          echo "========================================="
+          echo "  MPP Staging Deployment Summary"
+          echo "========================================="
+          echo "Namespace: $NAMESPACE"
+          echo ""
+
+          echo "RBAC Roles:"
+          oc get roles -n "$NAMESPACE" | grep ambient-project || echo "  None found"
+
+          echo ""
+          echo "Custom Resources:"
+          oc get projectsettings,agenticsessions,rfeworkflows -n "$NAMESPACE" 2>/dev/null || echo "  None found"
+
+          echo ""
+          echo "Next Steps:"
+          echo "1. Configure runner secrets via Web UI or CLI"
+          echo "2. Create test agentic session"
+          echo "3. Verify end-to-end session execution"
+          echo ""
+          echo "For manual secret setup:"
+          echo "  oc create secret generic anthropic-api-key \\"
+          echo "    -n $NAMESPACE \\"
+          echo "    --from-literal=ANTHROPIC_API_KEY=sk-ant-your-key"
+          echo ""
+          echo "To test session creation:"
+          echo "  See: vteam-mpp-deployment/scripts/test-session.sh"
+
+      - name: Run end-to-end verification
+        if: ${{ github.event.inputs.verify_only == 'true' }}
+        run: |
+          NAMESPACE="${{ github.event.inputs.namespace }}"
+
+          echo "Running verification checks..."
+
+          # Check namespace exists and is labeled
+          if ! oc get namespace "$NAMESPACE" >/dev/null 2>&1; then
+            echo "❌ Namespace $NAMESPACE does not exist"
+            exit 1
+          fi
+
+          LABELS=$(oc get namespace "$NAMESPACE" --show-labels | grep ambient-code.io/managed || echo "")
+          if [ -z "$LABELS" ]; then
+            echo "⚠️ Namespace is not labeled for vTeam management"
+          fi
+
+          # Check RBAC roles
+          ROLE_COUNT=$(oc get roles -n "$NAMESPACE" | grep -c ambient-project || echo "0")
+          if [ "$ROLE_COUNT" -lt 3 ]; then
+            echo "⚠️ Expected 3 RBAC roles, found: $ROLE_COUNT"
+          fi
+
+          # Check ProjectSettings
+          if ! oc get projectsettings default -n "$NAMESPACE" >/dev/null 2>&1; then
+            echo "⚠️ Default ProjectSettings not found"
+          fi
+
+          echo "✅ Verification complete"
