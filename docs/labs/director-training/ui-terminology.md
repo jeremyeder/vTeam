@@ -1,158 +1,353 @@
 # UI Terminology & Definitions
 
-Quick reference guide for vTeam Ambient Agentic Runner platform terminology.
-
-> **Source**: vTeam Platform - https://github.com/ambient-code/vTeam
+Platform terminology based on actual code implementation.
 
 ---
 
-## Core Platform Concepts
+## Core Concepts
 
-**Agentic Session**: AI-powered task executed by Claude Code CLI. Created via web UI, processed by specialized agents, returns structured results. (Source: vTeam README.md)
+**Agentic Session**: AI-powered task execution using Claude Code CLI. Represented as Custom Resource `agenticsessions.vteam.ambient-code`. (Source: `components/manifests/crds/agenticsessions-crd.yaml`)
 
-**Project**: User workspace containing sessions, settings, and API keys. Maps to a Kubernetes namespace for resource isolation. Access via web UI at `/projects`. (Source: components/README.md)
+**Project**: Namespace-scoped workspace for organizing sessions and settings. Represented as Custom Resource `AmbientProject`. (Source: `components/frontend/src/types/project.ts`, `components/manifests/crds/projectsettings-crd.yaml`)
 
-**Agent**: Specialized AI persona with defined expertise (e.g., Parker/PM, Archie/Architect, Stella/Staff Engineer). Built into platform, not customizable via UI currently. (Source: rhoai-ux-agents-vTeam.md)
+**Agent**: YAML-defined AI persona loaded from filesystem at runtime. Examples: "Product Manager", "Staff Engineer", "Team Lead". (Source: `components/backend/internal/handlers/agents.go`, `components/runners/claude-code-runner/agents/*.yaml`)
 
-**Multi-Agent / Council**: Workflow where multiple specialized agents review the same input, each providing their domain perspective. Example: 7-agent council for RFE review. (Source: rhoai-ux-agents-vTeam.md)
+**RFE Workflow**: Multi-phase feature refinement process with agent collaboration. Represented as Custom Resource `rfeworkflows.vteam.ambient-code`. (Source: `components/frontend/src/types/agentic-session.ts` lines 164-240, `components/manifests/crds/rfeworkflows-crd.yaml`)
 
-**Runner**: Kubernetes pod executing Claude Code CLI for AI task processing. Contains necessary tools and MCP capabilities. (Source: components/README.md)
+**Runner**: Container executing Claude Code CLI for session processing. Lives in `components/runners/claude-code-runner/`. (Source: `components/runners/claude-code-runner/CLAUDE.md`)
 
-**Runner Secrets / API Keys**: Encrypted credentials for AI service providers (Anthropic, OpenAI, etc.). Configured in Settings → Runner Secrets. Stored as Kubernetes Secrets. (Source: vTeam README.md)
-
-**RFE (Request for Enhancement)**: Feature specification workflow using multi-agent council to refine requirements. Produces implementation-ready documentation. (Source: docs/labs/basic/lab-1-first-rfe.md)
-
-**Prompt**: Task description provided to initiate an agentic session. Supports natural language, context, and agent selection. (Source: vTeam README.md)
+**Interactive Mode**: Chat-based session using inbox/outbox JSONL files for continuous interaction. Enabled via `spec.interactive: true` in AgenticSession. (Source: `components/manifests/crds/agenticsessions-crd.yaml` line 22-24)
 
 ---
 
-## Session Management
+## Session States
 
-**Session States**:
-- **Pending**: Created but not yet started
-- **Running**: Currently executing AI tasks
-- **Completed**: Successfully finished
-- **Failed**: Encountered errors during execution
+Session phases defined in TypeScript and CRD:
 
-**Timeout**: Maximum execution duration (default: 300 seconds). Configurable in session creation form. (Source: vTeam README.md)
-
-**Model Selection**: Choose AI model based on task complexity:
-- **Claude Sonnet**: Balanced performance and cost (default)
-- **Claude Haiku**: Faster, lower cost
-- **Claude Opus**: Most capable, higher cost
-
-**Interactive Mode**: Unlimited chat-based sessions. Checkbox option in advanced settings when creating session.
+**AgenticSessionPhase** (Source: `components/frontend/src/types/agentic-session.ts` line 1):
+- `Pending`: Session created, awaiting execution
+- `Creating`: Operator creating Kubernetes Job
+- `Running`: Job actively processing
+- `Completed`: Successfully finished
+- `Failed`: Error during execution
+- `Stopped`: Manually stopped by user
+- `Error`: System error
 
 ---
 
-## Navigation & UI
+## Routes (Actual Frontend Pages)
 
-**Web Interface**: NextJS frontend at route URL or `localhost:3000` (port-forward). Main access point for all platform features. (Source: components/README.md)
+Source: `components/frontend/src/app/` directory structure
 
-**Projects Page** (`/projects`): View and manage all accessible projects. Create new projects, search existing ones.
+**Projects**:
+- `/projects` - List all projects (Source: `components/frontend/src/app/projects/page.tsx`)
+- `/projects/new` - Create project form (Source: `components/frontend/src/app/projects/new/page.tsx`)
+- `/projects/[name]` - Project dashboard (Source: `components/frontend/src/app/projects/[name]/page.tsx`)
 
-**Sessions Page** (`/projects/[name]/sessions`): List all agentic sessions within a project. Filter by status, create new sessions.
+**Sessions**:
+- `/projects/[name]/sessions` - List sessions in project (Source: `components/frontend/src/app/projects/[name]/sessions/page.tsx`)
+- `/projects/[name]/sessions/new` - Create session form (Source: `components/frontend/src/app/projects/[name]/sessions/new/page.tsx`)
+- `/projects/[name]/sessions/[sessionName]` - Session detail view (Source: `components/frontend/src/app/projects/[name]/sessions/[sessionName]/page.tsx`)
 
-**New Session Page** (`/projects/[name]/sessions/new`): Form to create agentic session with prompt, model selection, and settings.
+**RFE Workflows**:
+- `/projects/[name]/rfe` - List RFE workflows (Source: `components/frontend/src/app/projects/[name]/rfe/page.tsx`)
+- `/projects/[name]/rfe/new` - Create RFE workflow (Source: `components/frontend/src/app/projects/[name]/rfe/new/page.tsx`)
+- `/projects/[name]/rfe/[id]` - RFE workflow detail (Source: `components/frontend/src/app/projects/[name]/rfe/[id]/page.tsx`)
 
-**Session Detail** (`/projects/[name]/sessions/[id]`): View session results with tabs:
-- **Output**: AI-generated analysis (markdown rendered)
-- **Logs**: Real-time execution logs
-- **Files**: Created/modified files (downloadable)
-- **Thinking**: AI reasoning process
-
-**Settings Page** (`/projects/[name]/settings`): Configure project information and runner secrets (API keys).
+**Settings & Access**:
+- `/projects/[name]/settings` - Project configuration (Source: `components/frontend/src/app/projects/[name]/settings/page.tsx`)
+- `/projects/[name]/keys` - API keys management (Source: `components/frontend/src/app/projects/[name]/keys/page.tsx`)
+- `/projects/[name]/permissions` - RBAC configuration (Source: `components/frontend/src/app/projects/[name]/permissions/page.tsx`)
 
 ---
 
-## Technical Terms
+## API Endpoints
 
-**Custom Resource (CR)**: Kubernetes API extension representing sessions and projects. Managed by operator. (Source: components/README.md)
+Source: `components/frontend/src/app/api/` directory structure
 
-**Namespace**: Kubernetes resource isolation boundary. Maps 1:1 with user-facing Project concept.
+**Project Operations**:
+- `GET /api/projects` - List projects
+- `POST /api/projects` - Create project
+- `GET /api/projects/[name]` - Get project details
+- `DELETE /api/projects/[name]` - Delete project
+- `GET /api/projects/[name]/settings` - Get settings
+- `PUT /api/projects/[name]/settings` - Update settings
 
-**Operator**: Kubernetes controller watching Custom Resources and creating Jobs. Written in Go. (Source: components/README.md)
+**Agentic Session Operations**:
+- `GET /api/projects/[name]/agentic-sessions` - List sessions
+- `POST /api/projects/[name]/agentic-sessions` - Create session
+- `GET /api/projects/[name]/agentic-sessions/[sessionName]` - Get session
+- `DELETE /api/projects/[name]/agentic-sessions/[sessionName]` - Delete session
+- `POST /api/projects/[name]/agentic-sessions/[sessionName]/stop` - Stop running session
+- `POST /api/projects/[name]/agentic-sessions/[sessionName]/clone` - Clone session
+- `GET /api/projects/[name]/agentic-sessions/[sessionName]/messages` - Get conversation messages
+- `GET /api/projects/[name]/agentic-sessions/[sessionName]/workspace` - List workspace files
+- `GET /api/projects/[name]/agentic-sessions/[sessionName]/workspace/[...path]` - Get file content
 
-**Job**: Kubernetes workload executing the agentic session. Ephemeral pod created per session.
+**Agent Operations** (Source: `components/frontend/src/app/api/projects/[name]/agents/route.ts`):
+- `GET /api/projects/[name]/agents` - List available agents
+- `GET /api/projects/[name]/agents/[persona]/markdown` - Get agent definition as markdown
 
-**Route**: OpenShift resource exposing frontend service via public URL. Format: `https://vteam-frontend-[namespace].apps.[cluster]`
+**RFE Workflow Operations**:
+- `GET /api/projects/[name]/rfe-workflows` - List workflows
+- `POST /api/projects/[name]/rfe-workflows` - Create workflow
+- `GET /api/projects/[name]/rfe-workflows/[id]` - Get workflow
+- `DELETE /api/projects/[name]/rfe-workflows/[id]` - Delete workflow
+- `GET /api/projects/[name]/rfe-workflows/[id]/summary` - Get summary
+- `POST /api/projects/[name]/rfe/[id]/jira` - Create JIRA tickets
+
+**Secrets Operations**:
+- `GET /api/projects/[name]/secrets` - List secrets
+- `POST /api/projects/[name]/secrets` - Create secret
+- `GET /api/projects/[name]/runner-secrets` - List runner secrets
+- `POST /api/projects/[name]/runner-secrets` - Create runner secret
+- `GET /api/projects/[name]/runner-secrets/config` - Get secrets config
+
+**Permissions Operations**:
+- `GET /api/projects/[name]/permissions` - List permissions
+- `POST /api/projects/[name]/permissions` - Create permission
+- `DELETE /api/projects/[name]/permissions/[subjectType]/[subjectName]` - Remove permission
+
+---
+
+## Data Structures
+
+### AgenticSessionSpec
+
+Source: `components/frontend/src/types/agentic-session.ts` lines 31-42
+
+```typescript
+{
+  prompt: string;                    // Required: Task description
+  llmSettings: {
+    model: string;                   // Default: "claude-3-7-sonnet-latest"
+    temperature: number;             // Default: 0.7
+    maxTokens: number;               // Default: 4000
+  };
+  timeout: number;                   // Default: 300 seconds
+  displayName?: string;              // Optional: Human-readable name
+  gitConfig?: GitConfig;             // Optional: Git repository configuration
+  project?: string;                  // Project association
+  interactive?: boolean;             // Enable chat mode
+  paths?: {
+    workspace?: string;              // PVC workspace path
+  }
+}
+```
+
+### Project Types
+
+Source: `components/frontend/src/types/project.ts` lines 111-119
+
+```typescript
+{
+  name: string;                      // Project identifier
+  displayName?: string;              // Human-readable name
+  description?: string;              // Project description
+  labels?: Record<string, string>;   // Kubernetes labels
+  annotations?: Record<string, string>; // Kubernetes annotations
+  creationTimestamp?: string;        // ISO timestamp
+  status?: string;                   // "Pending" | "Active" | "Error" | "Terminating"
+}
+```
+
+### Permission Roles
+
+Source: `components/frontend/src/types/project.ts` lines 19-30
+
+```typescript
+type PermissionRole = "view" | "edit" | "admin";
+
+{
+  subjectType: "user" | "group";
+  subjectName: string;
+  role: PermissionRole;
+  permissions?: string[];            // Optional: Granular permissions
+  memberCount?: number;              // For groups
+  grantedAt?: string;
+  grantedBy?: string;
+}
+```
+
+---
+
+## Message Types
+
+Source: `components/frontend/src/types/agentic-session.ts` lines 45-112
+
+**ContentBlock Types**:
+- `text_block`: Plain text content
+- `thinking_block`: AI reasoning process with signature
+- `tool_use_block`: Tool invocation with id, name, input
+- `tool_result_block`: Tool execution result
+
+**Message Types**:
+- `user_message`: User input
+- `assistant_message`: AI response with model info
+- `system_message`: Platform notifications
+- `result_message`: Session completion summary with cost/usage
+- `tool_use_messages`: Paired tool use and result
 
 ---
 
 ## Built-In Agents
 
-(Source: rhoai-ux-agents-vTeam.md - View complete details on GitHub)
+Source: `components/runners/claude-code-runner/agents/*.yaml`
 
-**Core Team:**
-- **Parker** (Product Manager): Business value, prioritization, stakeholder communication
-- **Archie** (Architect): Technical design, architecture decisions, system patterns
-- **Stella** (Staff Engineer): Implementation complexity, quality assessment, technical review
-- **Olivia** (Product Owner): Acceptance criteria, user stories, backlog refinement
-- **Lee** (Team Lead): Team coordination, sprint planning, execution planning
-- **Taylor** (Team Member): Pragmatic implementation, hands-on perspective
-- **Derek** (Delivery Owner): Sprint tickets, timelines, delivery coordination
+Agents are YAML files with this structure:
+```yaml
+name: "Product Manager"           # Display name
+persona: "PRODUCT_MANAGER"        # Identifier
+role: "Product Management and Business Strategy"
+isRootAgent: false
+expertise: [list of skills]
+systemMessage: |
+  Agent instructions and personality
+analysisPrompt:
+  template: |
+    Structured analysis template
+tools: []                         # Available Claude Code tools
+```
 
-**Specialized:**
-- **Emma** (Engineering Manager): Team health, capacity planning, delivery coordination
-- **Ryan** (UX Researcher): User insights, data analysis, research planning
-- **Phoenix** (PXE Specialist): Customer impact, lifecycle management, field experience
-- **Terry** (Technical Writer): Documentation, procedures, technical communication
+**Available Agents** (found in code):
+- `product_manager.yaml` - Product Manager
+- `staff_engineer.yaml` - Staff Engineer
+- `engineering_manager.yaml` - Engineering Manager
+- `team_lead.yaml` - Team Lead
+- `team_member.yaml` - Team Member
+- `delivery_owner.yaml` - Delivery Owner
+- `scrum_master.yaml` - Scrum Master
+- `technical_writer.yaml` - Technical Writer
+- `technical_writing_manager.yaml` - Technical Writing Manager
+- `documentation_program_manager.yaml` - Documentation Program Manager
+- `content_strategist.yaml` - Content Strategist
+- `ux_architect.yaml` - UX Architect
+- `ux_team_lead.yaml` - UX Team Lead
+- `ux_feature_lead.yaml` - UX Feature Lead
+- `ux_researcher.yaml` - UX Researcher
+- `pxe.yaml` - PXE (Product Experience Engineering)
 
----
-
-## Common Workflows
-
-**Create Agentic Session**:
-1. Navigate to Projects → Select project → New Session
-2. Enter prompt describing task
-3. Select model and configure settings
-4. Click "Create Session"
-5. Monitor real-time progress
-6. Review results in Output/Logs/Files tabs
-
-**Add API Key**:
-1. Navigate to Projects → Select project → Settings
-2. Click "Runner Secrets"
-3. Select provider (Anthropic, OpenAI, etc.)
-4. Enter API key (masked input)
-5. Optional: Validate key
-6. Save (encrypted in Kubernetes Secret)
-
-**Clone Session**:
-1. Open completed session detail page
-2. Click "Clone" button
-3. Modify prompt or settings
-4. Create new session based on original
-
----
-
-## Important Notes
-
-**Agent Customization**: Agents are built into platform code. No UI for creating custom agents currently. Customization requires code changes. UI support planned for future. (Source: User feedback 2025-10-07)
-
-**Agent Accuracy**: Agents work from data you provide. More context yields better results. Always validate factual claims and apply domain expertise.
-
-**Resource Limits**: Sessions have default timeout of 300 seconds. Adjust in advanced settings for longer tasks or increase globally via platform configuration.
-
-**Security**: All runner secrets encrypted as Kubernetes Secrets. RBAC controls project access. OpenShift OAuth integration available. (Source: components/manifests/rbac/)
+**Agent API Response Format** (Source: `components/backend/internal/handlers/agents.go` lines 20-25):
+```json
+{
+  "persona": "product-manager",
+  "name": "Product Manager",
+  "role": "Product Management and Business Strategy",
+  "description": "Agent description from YAML"
+}
+```
 
 ---
 
-## Troubleshooting
+## RFE Workflow Phases
 
-**"Session stuck in Pending"**: Operator may not be processing CRs. Check operator pod logs and RBAC permissions.
+Source: `components/frontend/src/types/agentic-session.ts` line 164
 
-**"API key validation failed"**: Key format incorrect or expired. Generate new key from provider console.
+```typescript
+type WorkflowPhase = "pre" | "ideate" | "specify" | "plan" | "tasks" | "review" | "completed";
+```
 
-**"Cannot load projects"**: Backend API unreachable. Verify backend pod status and route configuration.
+---
 
-**"Session timed out"**: Task exceeded timeout limit. Increase timeout in session settings or simplify prompt.
+## Git Configuration
+
+Source: `components/manifests/crds/agenticsessions-crd.yaml` lines 48-87
+
+Sessions can clone Git repositories with authentication:
+
+```yaml
+gitConfig:
+  user:
+    name: "User Name"
+    email: "user@example.com"
+  authentication:
+    sshKeySecret: "git-ssh-key"      # Kubernetes Secret name
+    tokenSecret: "git-token"         # Alternative: PAT token
+  repositories:
+    - url: "https://github.com/org/repo"
+      branch: "main"
+      clonePath: "repos/myrepo"
+```
+
+---
+
+## Storage Paths
+
+Source: `components/manifests/crds/agenticsessions-crd.yaml` lines 88-108
+
+Sessions use PVC-backed storage:
+
+```yaml
+paths:
+  workspace: "/sessions/{id}/workspace"    # Working directory
+  messages: "/sessions/{id}/messages.json" # Conversation log
+  inbox: "/sessions/{id}/inbox.jsonl"      # User chat inputs (interactive mode)
+  outbox: "/sessions/{id}/outbox.jsonl"    # AI responses (interactive mode)
+```
+
+---
+
+## Custom Resource Definitions
+
+Actual CRDs in cluster (Source: `components/manifests/crds/`):
+
+1. **agenticsessions.vteam.ambient-code** - AI task execution sessions
+2. **rfeworkflows.vteam.ambient-code** - Multi-phase RFE refinement workflows
+3. **projectsettings.vteam.ambient-code** - Project configuration
+
+---
+
+## Important Implementation Details
+
+**Agent Discovery** (Source: `components/backend/internal/handlers/agents.go` lines 27-37):
+- Agents loaded from `AGENTS_DIR` environment variable
+- Falls back to `/app/agents` in container
+- Scans `*.yaml` files excluding `agent-schema.yaml` and `README.yaml`
+- Name format: "FirstName Role" → persona: "firstname-role"
+
+**Agent Rendering** (Source: `components/backend/internal/handlers/agents.go` lines 111-156):
+- Agents returned as markdown with YAML frontmatter
+- Frontmatter includes: name, description, tools
+- Tools inferred from description ("WebSearch", "WebFetch", etc.)
+- Content field contains full agent prompt
+
+**Model Defaults** (Source: `components/manifests/crds/agenticsessions-crd.yaml` line 36):
+- Default model: `claude-3-7-sonnet-latest`
+- Default temperature: `0.7`
+- Default maxTokens: `4000`
+- Default timeout: `300` seconds (5 minutes)
+
+**Permission Roles** (Source: `components/frontend/src/types/project.ts` line 19):
+- `view`: Read-only access
+- `edit`: Can create sessions, modify non-security settings
+- `admin`: Full control including deletion
+
+**Subject Types for RBAC** (Source: `components/frontend/src/types/project.ts` line 21):
+- `user`: Individual user account
+- `group`: Group of users
+
+---
+
+## No UI for Agent Customization
+
+**Finding**: Despite API endpoints for listing agents (`GET /api/projects/[name]/agents`), there are NO frontend pages for:
+- Creating custom agents via UI
+- Editing agent YAML files
+- Uploading agent definitions
+
+**Agent Management Reality**:
+- Agents are read-only from filesystem
+- Loaded at runtime from YAML files
+- Customization requires editing YAML files and rebuilding runner image
+- No "Settings → Agent Templates" page exists in codebase
+
+**Source**: Absence of UI routes in `components/frontend/src/app/` tree; API is read-only (GET endpoint only in `components/frontend/src/app/api/projects/[name]/agents/route.ts`)
 
 ---
 
 ## Additional Resources
 
-**Platform Documentation**: https://github.com/ambient-code/vTeam
-**Agent Framework**: https://github.com/ambient-code/vTeam/blob/main/rhoai-ux-agents-vTeam.md
-**Deployment Guide**: docs/OPENSHIFT_DEPLOY.md
-**Training Plan**: docs/labs/director-training/TRAINING-REVISION-PLAN.md
+- Frontend code: `components/frontend/src/`
+- Backend code: `components/backend/internal/`
+- CRD definitions: `components/manifests/crds/`
+- Agent definitions: `components/runners/claude-code-runner/agents/`
