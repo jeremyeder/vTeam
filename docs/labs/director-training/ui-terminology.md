@@ -35,32 +35,6 @@ Session phases defined in TypeScript and CRD:
 
 ---
 
-## Routes (Actual Frontend Pages)
-
-Source: `components/frontend/src/app/` directory structure
-
-**Projects**:
-- `/projects` - List all projects (Source: `components/frontend/src/app/projects/page.tsx`)
-- `/projects/new` - Create project form (Source: `components/frontend/src/app/projects/new/page.tsx`)
-- `/projects/[name]` - Project dashboard (Source: `components/frontend/src/app/projects/[name]/page.tsx`)
-
-**Sessions**:
-- `/projects/[name]/sessions` - List sessions in project (Source: `components/frontend/src/app/projects/[name]/sessions/page.tsx`)
-- `/projects/[name]/sessions/new` - Create session form (Source: `components/frontend/src/app/projects/[name]/sessions/new/page.tsx`)
-- `/projects/[name]/sessions/[sessionName]` - Session detail view (Source: `components/frontend/src/app/projects/[name]/sessions/[sessionName]/page.tsx`)
-
-**RFE Workflows**:
-- `/projects/[name]/rfe` - List RFE workflows (Source: `components/frontend/src/app/projects/[name]/rfe/page.tsx`)
-- `/projects/[name]/rfe/new` - Create RFE workflow (Source: `components/frontend/src/app/projects/[name]/rfe/new/page.tsx`)
-- `/projects/[name]/rfe/[id]` - RFE workflow detail (Source: `components/frontend/src/app/projects/[name]/rfe/[id]/page.tsx`)
-
-**Settings & Access**:
-- `/projects/[name]/settings` - Project configuration (Source: `components/frontend/src/app/projects/[name]/settings/page.tsx`)
-- `/projects/[name]/keys` - API keys management (Source: `components/frontend/src/app/projects/[name]/keys/page.tsx`)
-- `/projects/[name]/permissions` - RBAC configuration (Source: `components/frontend/src/app/projects/[name]/permissions/page.tsx`)
-
----
-
 ## API Endpoints
 
 Source: `components/frontend/src/app/api/` directory structure
