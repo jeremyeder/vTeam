@@ -35,55 +35,6 @@ Session phases defined in TypeScript and CRD:
 
 ---
 
-## API Endpoints
-
-Source: `components/frontend/src/app/api/` directory structure
-
-**Project Operations**:
-- `GET /api/projects` - List projects
-- `POST /api/projects` - Create project
-- `GET /api/projects/[name]` - Get project details
-- `DELETE /api/projects/[name]` - Delete project
-- `GET /api/projects/[name]/settings` - Get settings
-- `PUT /api/projects/[name]/settings` - Update settings
-
-**Agentic Session Operations**:
-- `GET /api/projects/[name]/agentic-sessions` - List sessions
-- `POST /api/projects/[name]/agentic-sessions` - Create session
-- `GET /api/projects/[name]/agentic-sessions/[sessionName]` - Get session
-- `DELETE /api/projects/[name]/agentic-sessions/[sessionName]` - Delete session
-- `POST /api/projects/[name]/agentic-sessions/[sessionName]/stop` - Stop running session
-- `POST /api/projects/[name]/agentic-sessions/[sessionName]/clone` - Clone session
-- `GET /api/projects/[name]/agentic-sessions/[sessionName]/messages` - Get conversation messages
-- `GET /api/projects/[name]/agentic-sessions/[sessionName]/workspace` - List workspace files
-- `GET /api/projects/[name]/agentic-sessions/[sessionName]/workspace/[...path]` - Get file content
-
-**Agent Operations** (Source: `components/frontend/src/app/api/projects/[name]/agents/route.ts`):
-- `GET /api/projects/[name]/agents` - List available agents
-- `GET /api/projects/[name]/agents/[persona]/markdown` - Get agent definition as markdown
-
-**RFE Workflow Operations**:
-- `GET /api/projects/[name]/rfe-workflows` - List workflows
-- `POST /api/projects/[name]/rfe-workflows` - Create workflow
-- `GET /api/projects/[name]/rfe-workflows/[id]` - Get workflow
-- `DELETE /api/projects/[name]/rfe-workflows/[id]` - Delete workflow
-- `GET /api/projects/[name]/rfe-workflows/[id]/summary` - Get summary
-- `POST /api/projects/[name]/rfe/[id]/jira` - Create JIRA tickets
-
-**Secrets Operations**:
-- `GET /api/projects/[name]/secrets` - List secrets
-- `POST /api/projects/[name]/secrets` - Create secret
-- `GET /api/projects/[name]/runner-secrets` - List runner secrets
-- `POST /api/projects/[name]/runner-secrets` - Create runner secret
-- `GET /api/projects/[name]/runner-secrets/config` - Get secrets config
-
-**Permissions Operations**:
-- `GET /api/projects/[name]/permissions` - List permissions
-- `POST /api/projects/[name]/permissions` - Create permission
-- `DELETE /api/projects/[name]/permissions/[subjectType]/[subjectName]` - Remove permission
-
----
-
 ## Data Structures
 
 ### AgenticSessionSpec
