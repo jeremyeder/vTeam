@@ -206,12 +206,8 @@ check_network() {
         print_failure "Network: Cannot reach api.anthropic.com (check firewall/proxy)"
     fi
 
-    # Test Anthropic Console
-    if curl -sSf -m 5 -I https://console.anthropic.com > /dev/null 2>&1; then
-        print_success "Network: Can reach console.anthropic.com"
-    else
-        print_warning "Network: Cannot reach console.anthropic.com (may not affect training)"
-    fi
+    # Note: console.anthropic.com check removed - site uses Cloudflare protection
+    # that blocks curl requests. Console access not required for training.
 }
 
 check_cluster_access() {
