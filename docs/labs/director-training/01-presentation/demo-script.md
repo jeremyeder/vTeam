@@ -1,48 +1,14 @@
 # Demo Script: RFE Builder Live Demonstration
 
-**Duration**: 10 minutes
-**Scenario**: Adding dark mode feature to web application
-**Goal**: Show complete workflow from idea to implementation plan
-
-> **Source**: vTeam Platform - <https://github.com/ambient-code/vTeam>
-
----
-
-## Pre-Demo Setup (Before Session)
-
-### Environment Preparation
-
-1. **Have environment ready**:
-   ```bash
-   # Ensure Ambient platform is running
-   oc get pods -n ambient-code
-   ```
-
-   (Source: vTeam deployment instructions - docs/OPENSHIFT_DEPLOY.md)
-
-2. **Browser tabs prepared**:
+**Browser tabs prepared**:
    - Tab 1: Ambient web UI (logged in)
    - Tab 2: Agent definitions on GitHub (for reference):
      <https://github.com/ambient-code/vTeam/blob/main/rhoai-ux-agents-vTeam.md>
    - Tab 3: Backup/pre-recorded demo (failsafe)
 
-3. **Have example ready**:
-   - Pre-written feature description in notes
-   - Expected outputs documented
-   - Timing checkpoints noted
-
-### Backup Plan
-
-If live demo fails:
-- Switch to Tab 3 (pre-recorded walkthrough)
-- Talk through static screenshots in slides
-- Show completed example in GitHub
-
----
-
 ## Demo Flow
 
-### Part 1: Creating an Agentic Session (2 minutes)
+### Part 1: Creating an Agentic Session
 
 **Action**: Navigate to Ambient web UI
 
