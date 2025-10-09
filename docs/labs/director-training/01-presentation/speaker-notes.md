@@ -170,7 +170,7 @@ Spend time here. This is what makes Ambient unique.
 - Give examples of questions they ask
 
 **Why This Matters**:
-In labs, participants will create agents. Making these examples feel human helps them understand what to build.
+In labs, participants will learn to augment their workflows with these built-in agents. Making these examples feel human helps them understand agent capabilities.
 
 ---
 
@@ -368,7 +368,7 @@ Directors think about:
 **Set Expectations**:
 
 **Lab 1** (60 min):
-> "You'll create a digital twin agent - an AI version of yourself with your expertise. This isn't just an exercise; you'll leave with an agent you can actually use."
+> "You'll learn to augment your actual work with AI agents - choosing your A priority task and identifying which steps agents can automate. This isn't theoretical; you'll create a workflow you can use immediately."
 
 **Lab 2** (60 min):
 > "You'll use your agent to build and deploy a real application. Sounds ambitious? It is. But you'll see how AI-assisted development works in practice."
@@ -409,7 +409,7 @@ A: "Great question. Agents can be wrong - just like humans. That's why you revie
 A: "Start small. Run one RFE through it alongside your normal process. Compare quality and time. Let results speak. Most teams, once they try it, want to use it more."
 
 **Q: "What if our domain is highly specialized?"**
-A: "Perfect for Lab 1. You'll build an agent with your specialized knowledge. The more specialized your domain, the more valuable a custom agent becomes."
+A: "That's where workflow augmentation shines. In Lab 1, you'll learn to guide existing agents with specialized prompts and context. The more specialized your domain, the more valuable clear agent instructions become."
 
 **Q: "Security/compliance concerns?"**
 A: "Valid. Data goes to Anthropic's API (Claude). If you have strict requirements, we can discuss air-gapped deployments or alternative models. For most use cases, Anthropic's security is sufficient."
