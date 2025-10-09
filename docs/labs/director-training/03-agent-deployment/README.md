@@ -1,842 +1,389 @@
-# Lab 2: Enterprise Agent Deployment
+# Lab 2: Building Modern Web Features in 60 Minutes
 
-## Objective 🎯
+## What We're Building Today 🌓
 
-Deploy your AI-augmented workflow to production with enterprise security,
-monitoring, and operational excellence patterns.
+You know that dark mode option in your favorite apps? The one that saves your eyes during late-night email sessions? That's what we're building.
 
-**By the end of this lab, you will:**
+**Why this matters**: Your teams spend weeks debating features like this. Today, you'll build one in under an hour.
 
-- Implement IBM SOLUTION security framework for AI agents
-- Deploy workflow automation with proper RBAC and secrets management
-- Set up monitoring and observability for agent operations
-- Understand production deployment best practices
+By the end of this lab, you'll have:
+- A working web application running on your laptop
+- A professional dark mode toggle you built yourself
+- A better understanding of what your development teams do every day
 
-## Prerequisites 📋
+## No Coding Experience? No Problem!
 
-- [ ] Lab 1 completed (workflow augmentation working)
-- [ ] OpenShift cluster access (CRC or shared cluster)
-- [ ] Anthropic API key ready
-- [ ] Basic understanding of Kubernetes/OpenShift
-
-## Estimated Time ⏱️
-
-**60 minutes**
-
-- Part 1: Security Foundations (20 min)
-- Part 2: Production Deployment (25 min)
-- Part 3: Monitoring & Observability (15 min)
-
-## Core Principles
-
-Enterprise AI deployment requires:
-
-1. **Security by Design** - Not bolted on after
-2. **Operational Excellence** - Reliable, maintainable, observable
-3. **Least Privilege** - Minimum necessary access
-4. **Defense in Depth** - Multiple security layers
-
-(Source: IBM Guide to Architecting Secure Enterprise AI Agents with MCP)
+This is a follow-along tutorial. If you can copy and paste, you can do this lab.
 
 ---
 
-## Part 1: Security Foundations (20 minutes)
+## Part 1: Getting Your Workspace Ready (8 minutes)
 
-### Step 1.1: Understand the SOLUTION Framework
+Think of this like setting up a new laptop - a few commands, and you're ready to go.
 
-IBM's security framework for enterprise AI agents:
+### Step 1.1: Copy the Starter Project
 
-**S**ecure by design
-**O**bservability and monitoring
-**L**east privilege access
-**U**ser authentication and authorization
-**T**esting and validation
-**I**ncident response
-**O**perational excellence
-**N**etwork segmentation
+Just like using a PowerPoint template instead of starting from scratch.
 
-We'll implement each principle in this lab.
-
-(Source: IBM MCP Guide, Section 4)
-
-### Step 1.2: Security Checklist Review
-
-Before deploying, verify:
-
-```markdown
-## Pre-Deployment Security Checklist
-
-### Data Classification
-- [ ] Identified data sensitivity levels in your workflow
-- [ ] Reviewed what data will be sent to AI APIs
-- [ ] Confirmed no PII/PHI/PCI data in prompts (unless approved)
-- [ ] Understood data retention policies
-
-### Access Control
-- [ ] RBAC roles defined (Admin, Edit, View)
-- [ ] Team members assigned appropriate roles
-- [ ] Service accounts created with minimal permissions
-- [ ] No shared credentials
-
-### Secrets Management
-- [ ] API keys stored in Kubernetes Secrets (not ConfigMaps)
-- [ ] Secrets encrypted at rest
-- [ ] No secrets in git repository
-- [ ] Key rotation policy defined
-
-### Network Security
-- [ ] Understood pod network policies
-- [ ] Confirmed TLS for all external connections
-- [ ] API endpoints authenticated
-- [ ] No unencrypted traffic
-```
-
-**✅ Checkpoint**: Security checklist reviewed and understood
-
----
-
-### Step 1.3: Implement Secrets Management
-
-Secure API key storage following Kubernetes best practices.
-
-**Steps:**
-
-1. **Verify Current Namespace**
-
-   ```bash
-   # Check current project/namespace
-   oc project
-
-   # Or switch to your training project
-   oc project vteam-training-$(whoami)
-   ```
-
-   (Source: OpenShift CLI documentation)
-
-2. **Create Secret for Anthropic API Key**
-
-   ```bash
-   # Create secret (replace with your actual key)
-   oc create secret generic anthropic-api-key \
-     --from-literal=ANTHROPIC_API_KEY=sk-ant-your-key-here \
-     -n $(oc project -q)
-
-   # Verify secret created
-   oc get secret anthropic-api-key
-   ```
-
-3. **Validate Secret Contents (Keys Only)**
-
-   ```bash
-   # View secret metadata (DOES NOT show actual key)
-   oc describe secret anthropic-api-key
-
-   # Should show:
-   # Data
-   # ====
-   # ANTHROPIC_API_KEY:  XX bytes
-   ```
-
-4. **Set Secret Encryption at Rest** (if not already enabled)
-
-   OpenShift encrypts secrets by default. Verify:
-
-   ```bash
-   # Check encryption status
-   oc get apiservers cluster -o yaml | grep -A 5 encryption
-   ```
-
-**Security Best Practices Applied:**
-
-- ✅ **Secret stored in Kubernetes Secret** (not ConfigMap or env file)
-- ✅ **Encrypted at rest** by OpenShift
-- ✅ **Accessed via volume mount** (not environment variable)
-- ✅ **RBAC controls access** to secret
-
-**✅ Checkpoint**: API key securely stored as Kubernetes Secret
-
----
-
-### Step 1.4: Configure RBAC
-
-Set up role-based access control for your project.
-
-(Source: vTeam RBAC documentation - docs/rbac-permission-matrix.md)
-
-**Available Roles:**
-
-1. **view** - Read-only access to sessions and results
-2. **edit** - Create sessions, modify non-security settings
-3. **admin** - Full control including secrets and permissions
-
-**Grant Access to Team Member:**
+**Open your terminal** and copy/paste this:
 
 ```bash
-# Add user with 'edit' role
-oc policy add-role-to-user edit teammate-username -n $(oc project -q)
-
-# Add user with 'view' role (read-only)
-oc policy add-role-to-user view auditor-username -n $(oc project -q)
-
-# Verify role bindings
-oc get rolebindings -n $(oc project -q)
+git clone https://github.com/patternfly/patternfly-react-seed
+cd patternfly-react-seed
 ```
 
-**Create Service Account for Automation:**
+**What just happened?** You downloaded a pre-built web application to your computer.
+
+---
+
+### Step 1.2: Install What You Need
+
+Like installing Microsoft Office before you can use Word.
+
+**Copy and paste this** (then grab a coffee - this takes 2-3 minutes):
 
 ```bash
-# Create service account with minimal permissions
-oc create sa workflow-automation -n $(oc project -q)
-
-# Grant only necessary permissions
-oc policy add-role-to-user edit \
-  system:serviceaccount:$(oc project -q):workflow-automation \
-  -n $(oc project -q)
-
-# Get service account token (for CI/CD)
-oc sa get-token workflow-automation -n $(oc project -q)
+npm install
 ```
 
-**Principle Applied: Least Privilege**
+You'll see lots of text scrolling by. This is normal! It's downloading all the tools needed to run the app.
 
-- ✅ Users get minimum necessary permissions
-- ✅ Service accounts isolated per purpose
-- ✅ Read-only accounts for auditing
-- ✅ No admin access unless required
-
-**✅ Checkpoint**: RBAC configured with least privilege principle
+**✅ Checkpoint**: When you see "added XXX packages" you're done.
 
 ---
 
-## Part 2: Production Deployment (25 minutes)
+### Step 1.3: Start Your Application
 
-### Step 2.1: Deploy vTeam Platform
-
-Deploy the platform with production-ready configuration.
-
-(Source: vTeam README.md - Quick Start section)
-
-**Option A: Deploy from Official Images (Recommended)**
+**Copy and paste this**:
 
 ```bash
-# Clone vTeam repository
-git clone https://github.com/ambient-code/vTeam.git
-cd vTeam
-
-# Deploy to your namespace
-make deploy NAMESPACE=$(oc project -q)
-
-# Wait for pods to be ready
-oc get pods -n $(oc project -q) -w
+npm run start:dev
 ```
 
-**Option B: Deploy from Manifests Directly**
+**You'll see**:
+```
+webpack compiled successfully
+Project is running at http://localhost:8080
+```
+
+**Now the magic part**: Open your web browser and go to `http://localhost:8080`
+
+✨ **You now have a working web application!**
+
+**What you should see**:
+- A clean page with "PatternFly Seed" in the header
+- A sidebar on the left
+- Some sample content in the middle
+
+This is PatternFly - the same design system Red Hat uses in all our products.
+
+---
+
+## Part 2: Adding Dark Mode (30 minutes)
+
+Now the fun part - we're adding a feature your customers would love.
+
+### Step 2.1: Open the Project in Your Code Editor
+
+**For VS Code users** (most common):
 
 ```bash
-# Navigate to manifests
-cd components/manifests
-
-# Apply Custom Resource Definitions
-oc apply -f crds/
-
-# Apply RBAC
-oc apply -f rbac/ -n $(oc project -q)
-
-# Deploy services
-oc apply -f deployments/ -n $(oc project -q)
-oc apply -f services/ -n $(oc project -q)
-
-# Create route for frontend
-oc create route edge frontend-route \
-  --service=frontend-service \
-  --port=3000 \
-  -n $(oc project -q)
+code .
 ```
 
-**Verify Deployment:**
+**For other editors**: Open the `patternfly-react-seed` folder
 
-```bash
-# Check all pods are running
-oc get pods -n $(oc project -q)
+**What you're looking at**: This is the source code. Don't worry if it looks complex - we're only touching a few files.
 
-# Expected output:
-# NAME                        READY   STATUS    RESTARTS   AGE
-# backend-...                 1/1     Running   0          2m
-# frontend-...                1/1     Running   0          2m
-# operator-...                1/1     Running   0          2m
+---
 
-# Get frontend URL
-oc get route frontend-route -n $(oc project -q) \
-  -o jsonpath='{.spec.host}'
+### Step 2.2: Add the Toggle Button
+
+We'll add a button to the header that switches between light and dark modes.
+
+**Find this file**: `src/app/AppLayout/AppLayout.tsx`
+
+**What this file does**: Controls the layout of your entire app - the header, sidebar, everything.
+
+**Scroll to line ~100** where you see `headerTools={`
+
+**Add this code** right after the opening `<PageHeaderTools>` tag:
+
+```typescript
+<Button
+  variant="plain"
+  onClick={() => {
+    const isDark = document.documentElement.classList.contains('pf-v5-theme-dark');
+    if (isDark) {
+      document.documentElement.classList.remove('pf-v5-theme-dark');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.add('pf-v5-theme-dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  }}
+>
+  {document.documentElement.classList.contains('pf-v5-theme-dark') ? '☀️' : '🌙'}
+</Button>
 ```
 
-**✅ Checkpoint**: Platform deployed and accessible
+**Don't forget** to add the import at the top of the file:
 
----
-
-### Step 2.2: Configure Project Settings
-
-Set up your project for workflow automation.
-
-**Steps:**
-
-1. **Access Web Interface**
-
-   ```bash
-   # Get URL and open in browser
-   echo "https://$(oc get route frontend-route -n $(oc project -q) \
-     -o jsonpath='{.spec.host}')"
-   ```
-
-2. **Create Project** (if not exists)
-
-   - Click "New Project"
-   - Name: `workflow-automation`
-   - Description: "Director workflow augmentation - Production"
-   - Click "Create"
-
-3. **Configure Runner Secrets via UI**
-
-   - Navigate to: Projects → workflow-automation → Settings
-   - Click "Runner Secrets"
-   - Add Secret:
-     - Provider: Anthropic
-     - Key: Reference your `anthropic-api-key` secret
-   - Save
-
-4. **Verify Secret Configuration**
-
-   ```bash
-   # Check ProjectSettings custom resource
-   oc get projectsettings workflow-automation \
-     -n $(oc project -q) -o yaml
-
-   # Should show runnerSecrets configuration
-   ```
-
-**✅ Checkpoint**: Project configured with API keys
-
----
-
-### Step 2.3: Deploy Your Workflow Automation
-
-Turn your Lab 1 workflow into an automated recurring job.
-
-**Example: Weekly Status Report Automation**
-
-Create an automated session that runs weekly:
-
-1. **Create Session Configuration YAML**
-
-   ```yaml
-   # weekly-report-session.yaml
-   apiVersion: vteam.ambient-code/v1alpha1
-   kind: AgenticSession
-   metadata:
-     name: weekly-status-report
-     namespace: vteam-training-yourname
-   spec:
-     displayName: "Weekly Executive Status Report"
-     prompt: |
-       I need to create my weekly executive status report.
-
-       **Context**:
-       - 3 engineering teams (Platform, AI, Data)
-       - Quarterly goals: Ship AI-assisted dev tools, improve reliability
-
-       **Team Updates** (from Jira/Slack):
-       [This would be dynamically populated in production]
-       - Platform team: API gateway upgrade 60% complete
-       - AI team: Dark mode RFE completed
-       - Data team: Pipeline optimization reduced incidents 40%
-
-       **What I need**:
-       - Executive summary (3-4 paragraphs)
-       - Progress against quarterly goals
-       - Key risks or blockers
-       - Recommended focus for next week
-       - Format: Professional, concise, data-driven
-
-       **Agents**: Parker (business context), Emma (team health),
-       Lee (execution status)
-
-     llmSettings:
-       model: "claude-3-7-sonnet-latest"
-       temperature: 0.7
-       maxTokens: 4000
-
-     timeout: 600
-     project: workflow-automation
-   ```
-
-2. **Deploy the Session**
-
-   ```bash
-   # Apply session configuration
-   oc apply -f weekly-report-session.yaml
-
-   # Watch session execute
-   oc get agenticsessions -n $(oc project -q) -w
-   ```
-
-3. **Retrieve Results**
-
-   ```bash
-   # Get session status
-   oc get agenticsession weekly-status-report \
-     -n $(oc project -q) -o yaml
-
-   # View results (when completed)
-   oc get agenticsession weekly-status-report \
-     -n $(oc project -q) \
-     -o jsonpath='{.status.result}' | jq .
-   ```
-
-**For Production: Schedule with CronJob**
-
-```yaml
-# weekly-report-cronjob.yaml
-apiVersion: batch/v1
-kind: CronJob
-metadata:
-  name: weekly-status-report
-  namespace: vteam-training-yourname
-spec:
-  schedule: "0 9 * * 1"  # Every Monday at 9 AM
-  jobTemplate:
-    spec:
-      template:
-        spec:
-          serviceAccountName: workflow-automation
-          containers:
-          - name: trigger-session
-            image: quay.io/openshift/origin-cli:latest
-            command:
-            - /bin/bash
-            - -c
-            - |
-              oc apply -f /config/weekly-report-session.yaml
-          restartPolicy: OnFailure
-          volumes:
-          - name: config
-            configMap:
-              name: session-config
+```typescript
+import { Button } from '@patternfly/react-core';
 ```
 
-**✅ Checkpoint**: Workflow deployed and automated
+**Save the file** (Ctrl+S or Cmd+S)
+
+**Look at your browser** - it should automatically refresh!
+
+**You should now see**: A sun or moon emoji button in the top-right corner of your app.
+
+**Try clicking it!** Watch what happens. Pretty cool, right?
 
 ---
 
-## Part 3: Monitoring & Observability (15 minutes)
+### Step 2.3: Make It Remember User Choice
 
-### Step 3.1: Agent Observability Foundations
+Right now, if you refresh the page, it forgets your preference. Let's fix that.
 
-Understand what to monitor for AI agent operations.
+**Still in** `AppLayout.tsx`, add this code near the top of the component (around line 20):
 
-(Source: IBM MCP Guide, Section 6 - Agent Observability)
-
-**Key Monitoring Areas:**
-
-1. **Session Metrics**
-   - Success rate (completed vs failed)
-   - Execution duration
-   - Token usage and cost
-   - Error rates by type
-
-2. **Agent Performance**
-   - Which agents are used most
-   - Agent response quality patterns
-   - Processing time per agent
-
-3. **Resource Utilization**
-   - Pod CPU/memory usage
-   - Job queue depth
-   - Storage consumption
-
-4. **Business Metrics**
-   - Time saved per workflow
-   - User adoption rate
-   - Workflow automation coverage
-
----
-
-### Step 3.2: Set Up Basic Monitoring
-
-Implement monitoring using OpenShift's built-in capabilities.
-
-**View Session Metrics:**
-
-```bash
-# List all sessions with status
-oc get agenticsessions -n $(oc project -q) \
-  -o custom-columns=NAME:.metadata.name,\
-STATUS:.status.phase,DURATION:.status.duration,\
-TOKENS:.status.usage.totalTokens
-
-# Get session logs
-oc logs -l app=claude-code-runner -n $(oc project -q) --tail=100
-
-# Watch for errors
-oc get events -n $(oc project -q) --sort-by='.lastTimestamp' | \
-  grep -i error
+```typescript
+// Remember user's theme preference
+React.useEffect(() => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') {
+    document.documentElement.classList.add('pf-v5-theme-dark');
+  }
+}, []);
 ```
 
-**Monitor Resource Usage:**
+**Save the file**
 
-```bash
-# Pod resource consumption
-oc adm top pods -n $(oc project -q)
+**Test it**:
+1. Switch to dark mode
+2. Refresh your browser (F5)
+3. Dark mode should still be active!
 
-# Check for resource constraints
-oc describe pod -l app=claude-code-runner -n $(oc project -q) | \
-  grep -A 5 "Limits\|Requests"
+🎉 **You just built a production-quality feature!**
+
+---
+
+### Step 2.4: Polish the Experience
+
+Let's make the transition smooth instead of jarring.
+
+**Create a new file**: `src/app/app.css`
+
+**Add this CSS**:
+
+```css
+/* Smooth theme transitions */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark theme improvements */
+.pf-v5-theme-dark {
+  --pf-v5-global--BackgroundColor--100: #1a1a1a;
+  --pf-v5-global--Color--100: #f0f0f0;
+}
 ```
 
-**Set Up Alerts (OpenShift Monitoring):**
+**Import this file** in `src/app/index.tsx` (add this line near the top):
 
-```yaml
-# session-failure-alert.yaml
-apiVersion: monitoring.coreos.com/v1
-kind: PrometheusRule
-metadata:
-  name: agentic-session-alerts
-  namespace: vteam-training-yourname
-spec:
-  groups:
-  - name: agentic-sessions
-    interval: 30s
-    rules:
-    - alert: HighSessionFailureRate
-      expr: |
-        rate(agenticsession_failures_total[5m]) > 0.1
-      for: 5m
-      labels:
-        severity: warning
-      annotations:
-        summary: "High failure rate for agentic sessions"
-        description: "More than 10% of sessions failing"
-
-    - alert: SessionTimeoutExceeded
-      expr: |
-        agenticsession_duration_seconds > 600
-      labels:
-        severity: warning
-      annotations:
-        summary: "Session exceeded timeout threshold"
+```typescript
+import './app.css';
 ```
 
-**✅ Checkpoint**: Basic monitoring configured
+**Save both files**
+
+**Watch your app**: The theme should now fade smoothly instead of switching instantly.
 
 ---
 
-### Step 3.3: Implement Audit Logging
+## Part 3: See Your Results (15 minutes)
 
-Track all AI operations for compliance and debugging.
+You've just built a professional feature. Let's make sure it works perfectly.
 
-**Enable Session Audit Trail:**
+### Validation Checklist
 
-```bash
-# View session history
-oc get agenticsessions -n $(oc project -q) \
-  --sort-by=.metadata.creationTimestamp
+**✅ Test 1: Does the toggle work?**
+- Click the sun/moon button
+- Page should smoothly transition between light and dark
+- Text should stay readable in both modes
 
-# Export session audit log
-oc get agenticsessions -n $(oc project -q) -o json | \
-  jq '.items[] | {
-    name: .metadata.name,
-    created: .metadata.creationTimestamp,
-    user: .metadata.annotations["openshift.io/requester"],
-    prompt: .spec.prompt,
-    status: .status.phase,
-    tokens: .status.usage.totalTokens,
-    cost: .status.cost
-  }' > session-audit.json
-```
+**✅ Test 2: Does it remember your choice?**
+- Set it to dark mode
+- Refresh the page (F5)
+- Should still be dark mode
 
-**Track Who Did What:**
+**✅ Test 3: Does it work on all pages?**
+- Click "Support" in the sidebar
+- Click "General"
+- Theme should stay consistent across all pages
 
-```bash
-# View RBAC audit trail
-oc get events -n $(oc project -q) \
-  --field-selector reason=PolicyRule | \
-  grep -i "rolebinding\|role"
+**✅ Test 4: Does it look professional?**
+- No jarring color switches?
+- All text is readable?
+- Transitions are smooth?
 
-# Monitor secret access
-oc adm policy who-can get secret anthropic-api-key \
-  -n $(oc project -q)
-```
-
-**Production Audit Logging:**
-
-For production, integrate with centralized logging:
-
-```yaml
-# Forward logs to external SIEM
-apiVersion: logging.openshift.io/v1
-kind: ClusterLogForwarder
-metadata:
-  name: instance
-  namespace: openshift-logging
-spec:
-  outputs:
-  - name: siem
-    type: syslog
-    url: 'tcp://siem.example.com:514'
-  pipelines:
-  - name: audit-logs
-    inputRefs:
-    - audit
-    outputRefs:
-    - siem
-```
-
-**✅ Checkpoint**: Audit logging implemented
+**If all four tests pass**: Congratulations! You've built a feature that would typically take a developer half a day. And you did it in 30 minutes.
 
 ---
 
-### Step 3.4: Cost Tracking and Optimization
+## Part 4: What This Means for Your Organization (15 minutes)
 
-Monitor and optimize AI API costs.
+### Reflection Questions
 
-**Track Token Usage:**
+You just experienced modern web development. Take a moment to think about:
 
-```bash
-# Calculate total tokens used
-oc get agenticsessions -n $(oc project -q) -o json | \
-  jq '[.items[].status.usage.totalTokens // 0] | add'
+**Speed to Market**
+- You built a real feature in 30 minutes
+- Your teams can prototype customer ideas in hours, not weeks
+- Feedback loops go from months to days
 
-# Estimate monthly cost
-# (Tokens * $0.003 per 1K tokens for Claude Sonnet)
-```
-
-**Cost Optimization Strategies:**
-
-1. **Use Appropriate Models**
-   - Simple tasks: Claude Haiku (faster, cheaper)
-   - Complex analysis: Claude Sonnet (balanced)
-   - Critical decisions: Claude Opus (most capable)
-
-2. **Optimize Prompts**
-   - Remove unnecessary context
-   - Use clear, concise instructions
-   - Avoid repetitive preambles
-
-3. **Cache Common Patterns**
-   - Reuse workflow templates
-   - Cache agent configurations
-   - Share results across team
-
-4. **Set Budget Alerts**
-
-   ```yaml
-   # budget-alert.yaml
-   apiVersion: monitoring.coreos.com/v1
-   kind: PrometheusRule
-   metadata:
-     name: cost-alerts
-   spec:
-     groups:
-     - name: ai-costs
-       rules:
-       - alert: MonthlyBudgetExceeded
-         expr: |
-           sum(agenticsession_cost_dollars) > 500
-         annotations:
-           summary: "Monthly AI budget exceeded $500"
-   ```
-
-**✅ Checkpoint**: Cost tracking implemented
+**Questions**:
+- What features are your teams debating that could be prototyped this quickly?
+- How might rapid prototyping change your decision-making process?
+- What if you could *show* stakeholders working features instead of PowerPoint mockups?
 
 ---
 
-## Production Deployment Checklist
+**Quality Built In**
+- The toggle works smoothly out of the box
+- User preferences are remembered automatically
+- It looks professional without custom design work
 
-Before going to production, verify:
-
-### Security ✅
-
-- [ ] All secrets stored in Kubernetes Secrets
-- [ ] RBAC configured with least privilege
-- [ ] No hardcoded credentials in code
-- [ ] TLS enabled for all external connections
-- [ ] Network policies defined
-- [ ] Audit logging enabled
-- [ ] Incident response plan documented
-
-### Reliability ✅
-
-- [ ] Resource limits set on all pods
-- [ ] Health checks configured
-- [ ] Auto-scaling policies defined
-- [ ] Backup and recovery tested
-- [ ] Disaster recovery plan documented
-- [ ] High availability for critical components
-
-### Observability ✅
-
-- [ ] Metrics collection configured
-- [ ] Logging aggregation set up
-- [ ] Alerts defined for critical events
-- [ ] Dashboards created for operations team
-- [ ] On-call rotation established
-
-### Operations ✅
-
-- [ ] Runbook created for common issues
-- [ ] Key rotation procedure documented
-- [ ] Update/patching process defined
-- [ ] Team trained on operations
-- [ ] Support escalation paths clear
+**Questions**:
+- How much time do your teams spend on "polish"?
+- What if 80% of that polish came for free?
+- How would this affect your quality vs. speed tradeoff discussions?
 
 ---
 
-## Troubleshooting Guide
+**This is PatternFly**
+- Red Hat's design system used across all products
+- Consistent experience your customers recognize
+- Maintained by the same teams building OpenShift
 
-### Issue: Session Fails to Start
-
-**Symptoms:**
-- Session stuck in "Pending" state
-- No pods created
-
-**Diagnosis:**
-
-```bash
-# Check operator logs
-oc logs -l app=vteam-operator -n $(oc project -q) --tail=50
-
-# Check RBAC permissions
-oc auth can-i create jobs -n $(oc project -q)
-
-# Verify CRDs installed
-oc get crd agenticsessions.vteam.ambient-code
-```
-
-**Solutions:**
-1. Verify operator is running: `oc get pods -l app=vteam-operator`
-2. Check RBAC: Ensure operator has job creation permissions
-3. Review operator logs for specific errors
+**Questions**:
+- How much time do your teams spend reinventing UI components?
+- What's the value of consistency across your product portfolio?
+- Could your teams focus on unique features instead of basic UI?
 
 ---
 
-### Issue: API Key Not Found
+### The Bigger Picture: AI-Assisted Development
 
-**Symptoms:**
-- Session fails with "API key not found" error
-- Runner pod crashes
+**What you just experienced** is manual web development. Now imagine:
 
-**Diagnosis:**
+- AI suggesting the exact code you need
+- Automated testing catching bugs before you deploy
+- Documentation that writes itself
+- Features that adapt to user feedback in real-time
 
-```bash
-# Verify secret exists
-oc get secret anthropic-api-key -n $(oc project -q)
+**That's what we're building** with the Ambient platform.
 
-# Check ProjectSettings configuration
-oc get projectsettings -n $(oc project -q) -o yaml
-
-# Check runner pod logs
-oc logs -l app=claude-code-runner --tail=20
-```
-
-**Solutions:**
-1. Recreate secret with correct name
-2. Update ProjectSettings to reference correct secret
-3. Verify secret is in same namespace as session
+**The future**:
+- Developers describe what they want in plain English
+- AI generates the implementation
+- Humans review and approve
+- Ship to customers in hours, not months
 
 ---
 
-### Issue: High Costs
+## What You Accomplished Today
 
-**Symptoms:**
-- Unexpected API bills
-- Token usage higher than expected
+Let's be honest - most of you came into this thinking "I'm not a developer."
 
-**Diagnosis:**
+**But today you**:
+- ✅ Set up a professional development environment
+- ✅ Modified production code
+- ✅ Implemented a complete user-facing feature
+- ✅ Tested and validated your work
+- ✅ Experienced the developer workflow firsthand
 
-```bash
-# Identify expensive sessions
-oc get agenticsessions -n $(oc project -q) -o json | \
-  jq -r '.items[] | "\(.metadata.name): \(.status.usage.totalTokens)"' | \
-  sort -t: -k2 -nr | head -10
-```
-
-**Solutions:**
-1. Review prompts for unnecessary verbosity
-2. Use cheaper models for simple tasks (Haiku vs Sonnet)
-3. Implement prompt caching
-4. Set token limits: `maxTokens: 2000`
+**More importantly**:
+- You understand what your teams do every day
+- You've seen how fast modern development can be
+- You have a working example to show your stakeholders
+- You can make more informed decisions about technology investments
 
 ---
 
-## Key Learnings 📚
+## Taking This Further
 
-After completing this lab, you should understand:
+### Share Your Success
 
-1. **IBM SOLUTION Framework**: How to apply enterprise security principles
-   to AI agents
-2. **Secrets Management**: Kubernetes-native secure credential storage
-3. **RBAC**: Least privilege access control for teams
-4. **Monitoring**: What to observe for AI agent operations
-5. **Production Readiness**: Checklist for enterprise deployment
+**Screenshot your dark mode** and share it! Your team will be impressed.
 
----
+**Show your developers** - they'll appreciate you understanding their world better.
 
-## Next Steps 🔍
-
-**Immediate:**
-- Run your workflow automation in production for 1 week
-- Monitor metrics and gather usage data
-- Iterate on prompts based on results
-- Share success metrics with stakeholders
-
-**Advanced:**
-- Set up scheduled workflows (CronJobs)
-- Integrate with existing CI/CD pipelines
-- Build custom dashboards for your workflows
-- Contribute improvements back to vTeam platform
-
-**Scaling:**
-- Expand to additional workflows
-- Create team-wide agent libraries
-- Implement advanced monitoring (distributed tracing)
-- Build self-service platform for your organization
+**Ask your teams**:
+- "How could we use PatternFly to speed up our roadmap?"
+- "What features could we prototype in a day instead of a quarter?"
+- "How can we get customer feedback earlier in the process?"
 
 ---
 
-## Success Criteria ✅
+### Resources
 
-You've successfully completed Lab 2 when:
+**PatternFly**
+- Website: https://www.patternfly.org
+- Component library: Hundreds of pre-built, accessible components
+- Design resources: Sketch files, design tokens, guidelines
 
-- [ ] Platform deployed to OpenShift with proper RBAC
-- [ ] API keys securely managed as Kubernetes Secrets
-- [ ] Lab 1 workflow running as automated session
-- [ ] Basic monitoring and alerting configured
-- [ ] Audit logging enabled and tested
-- [ ] Production deployment checklist completed
-- [ ] Understand IBM SOLUTION security framework
+**Red Hat Developer**
+- https://developers.redhat.com
+- Free tools, training, and resources
+- Active community forums
 
-**Congratulations!** You now have enterprise-ready AI workflow automation!
+**Want to go deeper?**
+- Take the PatternFly tutorial: https://www.patternfly.org/get-started/develop
+- Explore OpenShift: https://www.redhat.com/en/technologies/cloud-computing/openshift
+- Learn about our AI strategy: https://www.redhat.com/en/technologies/cloud-computing/openshift/openshift-ai
 
 ---
 
-## Additional Resources
+## Troubleshooting
 
-**IBM Security Framework:**
-- IBM Guide to Architecting Secure Enterprise AI Agents with MCP
-- Section 4: SOLUTION Framework
-- Section 5: MCP Gateway Pattern
-- Section 6: Agent Observability
+### "npm install" fails
+**Try**: Delete the `node_modules` folder and run `npm install` again
 
-**Platform Documentation:**
-- vTeam GitHub: <https://github.com/ambient-code/vTeam>
-- Deployment Guide: docs/OPENSHIFT_DEPLOY.md
-- RBAC Matrix: docs/rbac-permission-matrix.md
-- OAuth Setup: docs/OPENSHIFT_OAUTH.md
+### App won't start
+**Check**: Is port 8080 already in use? Try changing it in `package.json`
 
-**OpenShift Security:**
-- Managing Secrets: <https://docs.openshift.com/container-platform/latest/nodes/pods/nodes-pods-secrets.html>
-- RBAC: <https://docs.openshift.com/container-platform/latest/authentication/using-rbac.html>
-- Network Policies: <https://docs.openshift.com/container-platform/latest/networking/network_policy/about-network-policy.html>
+### Changes don't appear
+**Solution**: Hard refresh your browser (Ctrl+Shift+R or Cmd+Shift+R)
 
-**Monitoring & Observability:**
-- OpenShift Monitoring: <https://docs.openshift.com/container-platform/latest/monitoring/monitoring-overview.html>
-- Prometheus Alerts: <https://prometheus.io/docs/alerting/latest/overview/>
+### Dark mode button doesn't show up
+**Check**: Did you import `Button` from PatternFly? Check the import at the top of the file.
+
+### Still stuck?
+**Ask the instructor** - that's what we're here for!
+
+---
+
+## Final Thoughts
+
+Software development isn't magic. It's a learnable skill that gets easier with the right tools.
+
+**You proved that today**.
+
+The same principles apply to AI development, infrastructure automation, and every other technical challenge your teams face.
+
+**The question isn't** "Can we do this?"
+
+**The question is** "How fast can we move once we start?"
+
+---
+
+**🎉 Congratulations on completing Lab 2!**
+
+**Next**: We'll discuss how to bring these capabilities back to your teams.
+
+---
+
+**Lab 2 Complete** - You're now ready for the wrap-up discussion and next steps.
