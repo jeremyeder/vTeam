@@ -199,15 +199,8 @@ check_network() {
         return
     fi
 
-    # Test Anthropic API endpoint
-    if curl -sSf -m 5 -I https://api.anthropic.com > /dev/null 2>&1; then
-        print_success "Network: Can reach api.anthropic.com"
-    else
-        print_failure "Network: Cannot reach api.anthropic.com (check firewall/proxy)"
-    fi
-
-    # Note: console.anthropic.com check removed - site uses Cloudflare protection
-    # that blocks curl requests. Console access not required for training.
+    # Note: Anthropic endpoint checks removed - Cloudflare protection blocks curl
+    # HEAD requests. API connectivity will be verified during actual training usage.
 }
 
 check_cluster_access() {
