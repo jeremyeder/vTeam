@@ -1,0 +1,44 @@
+```mermaid
+graph TB
+    subgraph "Before ACP - Manual Process"
+        M1[Vague RFE<br/>3-4 lines] --> M2[2-Hour Meeting]
+        M2 --> M3[PM Clarifies<br/>Still unclear]
+        M3 --> M4[Engineering Questions<br/>Missing details]
+        M4 --> M5[Write Criteria<br/>3-4 vague items]
+        M5 --> M6[Sprint Planning<br/>Discover issues]
+        M6 --> M7[Development<br/>Find more issues]
+        M7 --> M8[Testing<br/>Scope creep]
+        
+        style M1 fill:#ffccc7
+        style M2 fill:#ffccc7
+        style M3 fill:#ffd8d3
+        style M4 fill:#ffd8d3
+        style M5 fill:#ffe4e0
+        style M6 fill:#ffe4e0
+        style M7 fill:#ffebe8
+        style M8 fill:#ffebe8
+    end
+    
+    subgraph "After ACP - AI-Assisted Process"
+        A1[Natural Language<br/>Any detail] --> A2[7-Agent Analysis<br/>5 minutes]
+        A2 --> A3[Complete Package<br/>12+ criteria]
+        A3 --> A4[Sprint Planning<br/>Clear scope]
+        A4 --> A5[Development<br/>No surprises]
+        A5 --> A6[Testing<br/>All scenarios covered]
+        
+        style A1 fill:#b2f2bb
+        style A2 fill:#8ce99a
+        style A3 fill:#69db7c
+        style A4 fill:#51cf66
+        style A5 fill:#40c057
+        style A6 fill:#37b24d
+    end
+    
+    subgraph "Metrics Comparison"
+        MC[Time: 2hrs → 5min<br/>Quality: 3x better<br/>Rework: 80% less<br/>Velocity: +25%]
+        style MC fill:#fff3bf,stroke:#fab005,stroke-width:3px
+    end
+    
+    M8 --> MC
+    A6 --> MC
+```

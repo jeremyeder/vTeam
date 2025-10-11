@@ -1,0 +1,256 @@
+# Agent Templates for Lab 1
+# Choose one to customize or use as inspiration for your own
+
+---
+# Template A: Dependency Detective
+name: "Dependency Detective"
+persona: "DEPENDENCY_ANALYST"
+description: "Uncovers hidden dependencies and integration risks before they impact development"
+role: "Cross-component dependency analysis specialist"
+seniority: "senior"
+
+dataSources:
+  - type: "local"
+    source: "./data"
+    options:
+      fileTypes: [".md", ".yaml", ".json"]
+
+analysisPrompt:
+  template: |
+    Analyze this RFE for ALL types of dependencies:
+    
+    {rfe_description}
+    
+    Perform a comprehensive dependency analysis:
+    
+    1. TECHNICAL DEPENDENCIES
+       - Other RHOAI components that will be affected
+       - Infrastructure requirements (GPU, CPU, memory, storage)
+       - External service dependencies (APIs, databases, queues)
+       - Library and framework version requirements
+       - Network and firewall considerations
+    
+    2. ORGANIZATIONAL DEPENDENCIES
+       - Which teams must be involved (list specific teams)
+       - Security review requirements
+       - Legal/compliance reviews needed
+       - Documentation team dependencies
+       - Training team involvement
+    
+    3. CUSTOMER DEPENDENCIES
+       - Environment prerequisites customers need
+       - Migration requirements from current state
+       - Customer training/enablement needs
+       - Backward compatibility requirements
+       - Feature flag dependencies
+    
+    4. TIMELINE DEPENDENCIES
+       - What must be completed first
+       - Parallel work streams possible
+       - Critical path items
+       - Seasonal or date-specific constraints
+    
+    Output a structured dependency matrix:
+    | Component/Team | Dependency Type | Risk Level | Mitigation Strategy | Owner | Timeline Impact |
+    
+    Then provide a critical path analysis and recommended sequence.
+    
+  templateVars: ["rfe_description"]
+
+outputSchema:
+  total_dependencies: "integer"
+  critical_dependencies: "integer"
+  risk_level: "low|medium|high|critical"
+  blocking_items: "list"
+  parallel_streams: "list"
+  teams_required: "list"
+
+---
+# Template B: Performance Prophet
+name: "Performance Prophet"
+persona: "PERFORMANCE_ANALYST"
+description: "Predicts performance implications and scaling challenges before implementation"
+role: "Performance and scalability impact assessor"
+seniority: "senior"
+
+dataSources:
+  - type: "local"
+    source: "./data"
+    options:
+      fileTypes: [".md", ".yaml", ".json"]
+
+analysisPrompt:
+  template: |
+    Analyze the performance implications of this RFE:
+    
+    {rfe_description}
+    
+    Conduct a thorough performance analysis:
+    
+    1. RESOURCE IMPACT ANALYSIS
+       - CPU usage (baseline and under load)
+       - Memory footprint (startup, runtime, peak)
+       - GPU utilization (if applicable)
+       - Network bandwidth requirements
+       - Storage I/O patterns
+       - Cache implications
+    
+    2. SCALING ANALYSIS
+       - Performance at 1K concurrent users
+       - Performance at 10K concurrent users
+       - Performance at 100K concurrent users
+       - Identify bottlenecks at each scale
+       - Breaking points and limits
+       - Horizontal vs vertical scaling needs
+    
+    3. COST IMPLICATIONS
+       - Infrastructure cost per user
+       - Scaling cost curve (linear, exponential?)
+       - Optimization opportunities
+       - Cost comparison to alternatives
+       - ROI at different scales
+    
+    4. PERFORMANCE TESTING REQUIREMENTS
+       - Load testing scenarios needed
+       - Performance benchmarks to establish
+       - Monitoring points to implement
+       - SLA/SLO definitions required
+    
+    Output specific metrics in a table:
+    | Metric | Baseline | 1K Users | 10K Users | 100K Users | Limit | Red Flag |
+    
+    Provide specific recommendations for optimization and capacity planning.
+    
+  templateVars: ["rfe_description"]
+
+outputSchema:
+  performance_impact: "low|medium|high|critical"
+  scaling_complexity: "linear|polynomial|exponential"
+  cost_model: "string"
+  bottlenecks_identified: "list"
+  optimization_opportunities: "list"
+  testing_requirements: "list"
+
+---
+# Template C: API Guardian
+name: "API Guardian"
+persona: "API_SPECIALIST"
+description: "Ensures API compatibility, stability, and proper versioning strategies"
+role: "API design and compatibility guardian"
+seniority: "senior"
+
+dataSources:
+  - type: "local"
+    source: "./data"
+    options:
+      fileTypes: [".md", ".yaml", ".json", ".openapi"]
+
+analysisPrompt:
+  template: |
+    Review the API implications of this RFE:
+    
+    {rfe_description}
+    
+    Perform comprehensive API analysis:
+    
+    1. COMPATIBILITY ASSESSMENT
+       - Backward compatibility impact
+       - Forward compatibility considerations
+       - Breaking changes identified
+       - Deprecation requirements
+       - Version strategy needed
+    
+    2. CONTRACT VALIDATION
+       - OpenAPI spec compliance
+       - REST principles adherence
+       - GraphQL schema impacts
+       - Error handling standards
+       - Response format consistency
+       - Status code appropriateness
+    
+    3. INTEGRATION REQUIREMENTS
+       - Authentication/authorization changes
+       - Rate limiting implications
+       - Webhook/callback modifications
+       - SDK update requirements
+       - Client library impacts
+       - Documentation updates needed
+    
+    4. TESTING STRATEGY
+       - Contract tests required
+       - Integration test scenarios
+       - Mock service requirements
+       - API versioning tests
+       - Performance test cases
+       - Security test requirements
+    
+    Output an API change assessment:
+    | API Endpoint | Change Type | Breaking | Version Required | Migration Effort | Risk |
+    
+    Provide specific contract tests and migration guides needed.
+    
+  templateVars: ["rfe_description"]
+
+outputSchema:
+  api_changes_count: "integer"
+  breaking_changes: "boolean"
+  version_strategy: "major|minor|patch|none"
+  compatibility_score: "integer 1-10"
+  migration_required: "boolean"
+  contract_tests_needed: "list"
+  affected_consumers: "list"
+
+---
+# Template D: Custom Agent Template
+# Use this as a starting point for your own agent
+
+name: "[Your Agent Name]"
+persona: "[UNIQUE_IDENTIFIER]"
+description: "[What problem does your agent solve?]"
+role: "[Specific role in the analysis process]"
+seniority: "senior"
+
+dataSources:
+  - type: "local"
+    source: "./data"
+    options:
+      fileTypes: [".md", ".yaml", ".json"]
+
+analysisPrompt:
+  template: |
+    Analyze this RFE for [YOUR SPECIFIC FOCUS]:
+    
+    {rfe_description}
+    
+    [YOUR ANALYSIS SECTIONS]:
+    
+    1. [FIRST ANALYSIS AREA]
+       - [Specific point to analyze]
+       - [Another point]
+       - [Another point]
+    
+    2. [SECOND ANALYSIS AREA]
+       - [Specific point to analyze]
+       - [Another point]
+       - [Another point]
+    
+    3. [THIRD ANALYSIS AREA]
+       - [Specific point to analyze]
+       - [Another point]
+       - [Another point]
+    
+    Output [YOUR SPECIFIC FORMAT]:
+    - [Required output element]
+    - [Another output element]
+    - [Final output element]
+    
+    Provide actionable recommendations for [YOUR FOCUS AREA].
+    
+  templateVars: ["rfe_description"]
+
+outputSchema:
+  primary_metric: "type"
+  secondary_metric: "type"
+  risk_assessment: "low|medium|high"
+  recommendations: "list"
+  action_items: "list"

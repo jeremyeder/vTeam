@@ -1,0 +1,24 @@
+graph LR
+    subgraph "Current State - 2 Hours Per Feature"
+        A[Vague RFE<br/>1-2 sentences] -->|30 min| B[PM Clarification<br/>Missing context]
+        B -->|45 min| C[Engineering Questions<br/>Technical gaps]
+        C -->|30 min| D[Write Acceptance Criteria<br/>Often incomplete]
+        D -->|15 min| E[Maybe Ready to Code<br/>40% need rework]
+    end
+    
+    subgraph "With ACP - 5 Minutes Total"
+        F[Natural Language<br/>Request] -->|Instant| G[7 Agent Analysis<br/>Parallel processing]
+        G -->|2-3 min| H[Complete RFE<br/>Ready to code]
+        H -->|Auto| I[Sprint Ready<br/>90% complete]
+    end
+    
+    style A fill:#ff6b6b,stroke:#d63447,stroke-width:2px,color:#fff
+    style B fill:#ff6b6b,stroke:#d63447,stroke-width:2px,color:#fff
+    style C fill:#ff6b6b,stroke:#d63447,stroke-width:2px,color:#fff
+    style D fill:#ff6b6b,stroke:#d63447,stroke-width:2px,color:#fff
+    style E fill:#ffa502,stroke:#ff6348,stroke-width:2px,color:#fff
+    
+    style F fill:#51cf66,stroke:#27ae60,stroke-width:2px,color:#fff
+    style G fill:#51cf66,stroke:#27ae60,stroke-width:2px,color:#fff
+    style H fill:#51cf66,stroke:#27ae60,stroke-width:2px,color:#fff
+    style I fill:#51cf66,stroke:#27ae60,stroke-width:2px,color:#fff

@@ -1,0 +1,46 @@
+{
+  "title": "Add Dark Mode to PatternFly React Seed Application",
+  "requester": "Product Management",
+  "date": "2025-01-10",
+  "priority": "high",
+  "initial_description": "We need to add dark mode support to our PatternFly React application",
+  "context": {
+    "user_feedback": [
+      "47 customer requests for dark mode in Q4 2024",
+      "Eye strain complaints from 24/7 operations teams",
+      "Accessibility requirement for photosensitive users"
+    ],
+    "technical_context": [
+      "React 18.x application",
+      "PatternFly v5 design system",
+      "Currently using CSS modules",
+      "No theming infrastructure in place"
+    ],
+    "business_drivers": [
+      "Competitive parity - all competitors have dark mode",
+      "Potential deal blocker for 3 enterprise accounts",
+      "Accessibility compliance requirements"
+    ],
+    "constraints": [
+      "Must maintain PatternFly design standards",
+      "Cannot break existing customizations",
+      "Must support IE11 (enterprise requirement)",
+      "Performance budget: <50ms theme switch"
+    ]
+  },
+  "success_criteria": [
+    "Users can toggle between light and dark modes",
+    "Theme preference persists across sessions",
+    "All PatternFly components render correctly",
+    "WCAG AAA compliance in both modes"
+  ],
+  "questions_for_refinement": [
+    "Where should the toggle be placed?",
+    "Should we respect system preferences?",
+    "How do we handle print styles?",
+    "What about email templates?",
+    "Migration path for custom components?"
+  ],
+  "initial_estimate": "unknown",
+  "notes": "This is a high-priority request from multiple enterprise customers. The design team has approved the concept but needs to review the implementation."
+}
