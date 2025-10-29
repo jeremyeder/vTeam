@@ -1,0 +1,334 @@
+VTEAM CONTEXT ENGINEERING EXPLORATION - EXECUTIVE SUMMARY
+
+==============================================================================
+1. WHAT IS VTEAM?
+==============================================================================
+
+vTeam is a Kubernetes-native AI automation platform that orchestrates Claude Code
+CLI sessions through containerized microservices. It enables:
+
+- Multi-agent AI workflows with 16 specialized personas
+- Spec-driven development (spec.md → plan.md → tasks.md)
+- Enterprise-grade deployment with RBAC and multi-tenancy
+- Real-time WebSocket-based monitoring
+- Integration with Git and GitHub for collaborative development
+
+STACK:
+  Frontend: NextJS + Shadcn UI
+  Backend:  Go + Gin (Kubernetes API client)
+  Operator: Go (Custom Resource reconciliation)
+  Runner:   Python + Claude Agent SDK
+  
+==============================================================================
+2. CONTEXT MANAGEMENT ARCHITECTURE
+==============================================================================
+
+vTeam manages FIVE TYPES of context:
+
+A. USER CONTEXT
+   - userID, displayName, groups (from OAuth/SSO)
+   - Used for RBAC and audit trails
+   - Captured at session creation time
+   
+B. SESSION CONTEXT (RunnerContext)
+   - session_id: unique identifier
+   - workspace_path: shared PVC mount point
+   - environment: dict of all env vars
+   - metadata: arbitrary key-value storage
+   
+C. LLM CONTEXT SETTINGS
+   - model: default "claude-3-7-sonnet-latest"
+   - temperature: default 0.7
+   - maxTokens: default 4000
+   
+D. MULTI-REPO CONTEXT
+   - Multiple git repositories with input/output mappings
+   - mainRepoIndex: specifies Claude's working directory
+   - Per-repo push status tracking
+   
+E. AGENT/MCP CONTEXT
+   - 16 specialized agent personas
+   - MCP server configurations from .mcp.json
+   - Tool permissions (Read, Write, Bash, Glob, Grep, etc.)
+
+CONTEXT FLOW:
+  1. Frontend: User creates session with context
+  2. Backend: Parses, creates AgenticSession CR
+  3. Backend: Derives UserContext from caller
+  4. Backend: Provisions runner token secret
+  5. Operator: Extracts context → injects as env vars to Job
+  6. Runner: Loads RunnerContext, merges with environment
+  7. Claude SDK: Executes with context-aware prompts
+  8. Runner: Updates CR status with results (tokens, cost, turns)
+
+==============================================================================
+3. TOKEN MANAGEMENT STRATEGY
+==============================================================================
+
+THREE-TIER TOKEN SYSTEM:
+
+TIER 1: USER TOKENS (OpenShift OAuth)
+  - Purpose: Authenticate backend API calls
+  - Security: Bearer token in Authorization header
+  - Lifecycle: Session-bound to OpenShift session
+  - Code: components/backend/handlers/middleware.go
+  
+TIER 2: RUNNER BOT TOKENS (Kubernetes)
+  - Purpose: Allow runner to update CR status and fetch GitHub tokens
+  - Creation: Backend creates per-session ServiceAccount
+  - Storage: Kubernetes Secret: ambient-runner-token-{sessionName}
+  - Injection: BOT_TOKEN environment variable
+  - Code: components/backend/handlers/sessions.go:provisionRunnerTokenForSession()
+  
+TIER 3: GITHUB TOKENS (On-demand)
+  - Purpose: Clone/push repos
+  - Fetching: POST /github/token endpoint (mints via GitHub App)
+  - Caching: GITHUB_TOKEN env var (if available)
+  - Security: Redacted from logs via regex patterns
+  - Code: components/runners/claude-code-runner/wrapper.py:_fetch_github_token()
+
+KEY SECURITY FEATURES:
+  - Token redaction in logs (regex: ghs_, ghp_, x-access-token patterns)
+  - Short-lived tokens with minimal scope
+  - Tokens never appear in API responses
+  - Separate service account per session (namespace-scoped)
+
+==============================================================================
+4. GPU COMPUTE & RESOURCE MANAGEMENT
+==============================================================================
+
+CURRENT STATE: MINIMAL GPU SUPPORT
+
+ResourceOverrides struct (types/common.go):
+  - CPU: string (e.g., "500m", "2")
+  - Memory: string (e.g., "512Mi", "2Gi")
+  - StorageClass: string
+  - PriorityClass: string
+  
+  NOTE: GPU fields NOT defined
+
+Job Resources (operator/sessions.go line 392):
+  Resources: corev1.ResourceRequirements{} // EMPTY!
+  
+Storage (operator/services/infrastructure.go):
+  - Fixed 5Gi per session PVC
+  - No configurable size
+  - No storage optimization
+
+WHAT'S MISSING:
+  - No nvidia.com/gpu resource requests
+  - No VRAM awareness or GPU model selection
+  - No memory optimization based on available resources
+  - No compute scheduling (affinity/anti-affinity)
+  - No resource monitoring or metrics
+  - No dynamic scaling
+  - No cost optimization awareness
+
+LIMITS OBSERVED:
+  - Operator pod: 50m/64Mi (requests), 200m/256Mi (limits)
+  - Runner pod: No explicit limits
+  - Max timeout: 14400 seconds (4 hours) in Job spec
+  - Max tokens: 4000 per request (LLM settings)
+
+OPPORTUNITY: Implement GPU-aware context engineering with:
+  - GPU availability detection
+  - Token budget adaptation based on available VRAM
+  - Multi-model selection based on GPU tier
+  - Cost-aware model routing
+
+==============================================================================
+5. KEY COMPONENTS & ARCHITECTURE
+==============================================================================
+
+BACKEND (Go):
+  - REST API for session CRUD
+  - Kubernetes Custom Resource management
+  - Token provisioning and minting
+  - WebSocket hub for real-time updates
+  - RBAC enforcement via user tokens
+  
+  Key file: components/backend/handlers/sessions.go (1724 lines)
+  
+OPERATOR (Go):
+  - Watches AgenticSession CRs
+  - Creates Jobs with per-session PVCs
+  - Monitors Job status and updates CR
+  - Handles resource cleanup via OwnerReferences
+  
+  Key file: components/operator/internal/handlers/sessions.go (550+ lines)
+  
+RUNNER (Python):
+  - ClaudeCodeAdapter: Main orchestration class
+  - Workspace preparation: Git clone/fetch/push
+  - LLM execution: Claude SDK with tools
+  - Context management: MCP servers, multi-repo setup
+  - Result streaming: WebSocket to backend
+  
+  Key file: components/runners/claude-code-runner/wrapper.py (1206 lines)
+  
+RUNNER SHELL (Python):
+  - Protocol layer for runner-backend communication
+  - Message types: SYSTEM_MESSAGE, AGENT_MESSAGE, MESSAGE_PARTIAL
+  - WebSocket transport abstraction
+  
+  Key files: components/runners/runner-shell/runner_shell/core/
+
+==============================================================================
+6. CONTEXT ENGINEERING OPPORTUNITIES
+==============================================================================
+
+CURRENT LIMITATIONS:
+
+1. NO CONTEXT WINDOWING
+   - All context injected regardless of relevance
+   - No filtering for token efficiency
+   
+2. NO CONTEXT SUMMARIZATION
+   - No automatic compression for long runs
+   - No multi-turn memory optimization
+   
+3. NO TOKEN ACCOUNTING
+   - Usage tracked but not predictive
+   - No context budgeting before execution
+   - No adaptive sizing based on available tokens
+   
+4. NO HIERARCHICAL CONTEXT
+   - All context at same priority level
+   - No context relevance scoring
+   
+5. NO DYNAMIC CONTEXT
+   - Context set once at session start
+   - No phase-based context updates
+   - No real-time context adaptation
+   
+6. NO RESOURCE AWARENESS
+   - GPU context completely absent
+   - No memory-aware token budgeting
+   - No compute cost awareness in context selection
+
+PROPOSED IMPROVEMENTS:
+
+1. Context Windowing Module:
+   - Implement context relevance scoring
+   - Compress irrelevant context automatically
+   - Track context size vs. token budget
+   
+2. Token Budget Manager:
+   - Pre-calculate available token budget
+   - Allocate tokens: system prompt, context, output buffer
+   - Warn/abort if budget exceeded
+   
+3. Multi-turn Context Cache:
+   - Persist summaries between turns
+   - Retrieve relevant historical context
+   - Manage context lifecycle with TTL
+   
+4. GPU-Aware Context Engineering:
+   - Detect available GPU VRAM
+   - Select appropriate token limits
+   - Route to suitable model based on resource constraints
+   
+5. Dynamic Context Phases:
+   - Update context based on execution phase
+   - Load phase-specific tools and constraints
+   - Adapt prompts based on progress
+   
+6. Cost Tracking in Context:
+   - Include cost metadata in context
+   - Warn if approaching cost threshold
+   - Suggest cheaper model alternatives
+
+==============================================================================
+7. CRITICAL SECURITY & PATTERNS
+==============================================================================
+
+SECURITY REQUIREMENTS (from CLAUDE.md):
+  1. User token authentication REQUIRED for API operations
+  2. NO panic() in production code
+  3. Token redaction in logs (never log full tokens)
+  4. Type-safe unstructured access (use NestedMap helpers)
+  5. OwnerReferences for resource cleanup
+  6. RBAC checks before all resource access
+
+DEVELOPMENT STANDARDS:
+  - Go code: gofmt, go vet, golangci-lint
+  - Python: black (88 char), isort, flake8
+  - Frontend: Zero `any` types, Shadcn components only, React Query for data
+  - All tests must pass before merge
+
+==============================================================================
+8. FILE REFERENCE GUIDE
+==============================================================================
+
+CORE BUSINESS LOGIC:
+  - /components/backend/handlers/sessions.go (1724 lines)
+    → Session CRUD, token provisioning, CR lifecycle
+  - /components/operator/internal/handlers/sessions.go (550+ lines)
+    → Watch loop, Job creation, status monitoring
+  - /components/runners/claude-code-runner/wrapper.py (1206 lines)
+    → Context loading, SDK execution, Git operations
+
+TYPES & STRUCTURES:
+  - /components/backend/types/session.go → AgenticSessionSpec, Status
+  - /components/backend/types/common.go → ResourceOverrides, LLMSettings
+  - /components/runners/runner-shell/runner_shell/core/context.py → RunnerContext
+
+KUBERNETES RESOURCES:
+  - /components/manifests/crds/agenticsessions-crd.yaml → CRD schema
+  - /components/manifests/operator-deployment.yaml → Operator pod
+
+DOCUMENTATION:
+  - /docs/CLAUDE_CODE_RUNNER.md → Architecture and agent personas
+  - /CLAUDE.md → Development guidelines (920+ lines)
+  - /README.md → Quick start and deployment
+
+==============================================================================
+9. RECOMMENDATIONS FOR CONTEXT ENGINEERING IMPROVEMENTS
+==============================================================================
+
+SHORT-TERM (Quick wins):
+  1. Add GPU resource fields to ResourceOverrides
+  2. Implement token accounting in LLMSettings
+  3. Add context size metrics to CR status
+
+MEDIUM-TERM (1-2 sprints):
+  1. Implement context relevance scoring
+  2. Add token budget warnings
+  3. Create multi-turn context cache
+  4. Add GPU-aware token limits
+
+LONG-TERM (Strategic):
+  1. Implement adaptive context compression
+  2. Build context optimization engine
+  3. Add cost-aware model selection
+  4. Create context debugging/monitoring dashboard
+
+==============================================================================
+10. QUICK REFERENCE - ENVIRONMENT VARIABLES
+==============================================================================
+
+Backend → Runner (injected by operator):
+  SESSION_ID: Session name
+  WORKSPACE_PATH: PVC mount path
+  PROMPT: Initial prompt
+  INTERACTIVE: "true" for chat mode
+  TIMEOUT: Seconds (default 300)
+  LLM_MODEL: Claude model name
+  LLM_TEMPERATURE: Float 0.0-1.0
+  LLM_MAX_TOKENS: Token limit
+  ANTHROPIC_API_KEY: API key
+  BOT_TOKEN: K8s token for CR updates
+  REPOS_JSON: Multi-repo mapping
+  MAIN_REPO_INDEX: Main repo index
+  MAIN_REPO_NAME: Main repo name
+  INPUT_REPO_URL, INPUT_BRANCH: Source repo
+  OUTPUT_REPO_URL, OUTPUT_BRANCH: Destination repo
+  AUTO_PUSH_ON_COMPLETE: "true" to auto-push
+  CREATE_PR: "true" to create PR
+
+User Secret Variables (from ProjectSettings):
+  ANTHROPIC_API_KEY: Project's Anthropic key
+  GITHUB_TOKEN: Project's GitHub token (optional)
+  GIT_USER_NAME, GIT_USER_EMAIL: Git identity
+
+==============================================================================
