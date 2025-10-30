@@ -80,7 +80,7 @@ cd vTeam
 
 Some labs include sample data and configurations:
 
-```
+```text
 labs/
 ├── data/                       # Sample datasets
 │   ├── sample-rfes.json       # Example RFE submissions

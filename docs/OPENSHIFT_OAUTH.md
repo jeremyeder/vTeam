@@ -1,10 +1,10 @@
-## OpenShift OAuth Setup (with oauth-proxy sidecar)
+# OpenShift OAuth Setup (with oauth-proxy sidecar)
 
 This project secures the frontend using the OpenShift oauth-proxy sidecar. The proxy handles login against the cluster and forwards authenticated requests to the Next.js app.
 
 You only need to do two one-time items per cluster: create an OAuthClient and provide its secret to the app. Also ensure the Route host uses your cluster apps domain.
 
-### Quick checklist (copy/paste)
+## Quick checklist (copy/paste)
 
 Admin (one-time per cluster):
 
@@ -15,7 +15,7 @@ ROUTE_DOMAIN=$(oc get ingresses.config cluster -o jsonpath='{.spec.domain}')
 oc -n ambient-code patch route frontend-route --type=merge -p '{"spec":{"host":"ambient-code.'"$ROUTE_DOMAIN"'"}}'
 ```
 
-2. Create OAuthClient and keep the secret
+1. Create OAuthClient and keep the secret
 
 ```bash
 ROUTE_HOST=$(oc -n ambient-code get route frontend-route -o jsonpath='{.spec.host}')
@@ -33,7 +33,8 @@ EOF
 ```
 
 Deployer (per install):
-3. Put the client secret in the app Secret and restart
+
+1. Put the client secret in the app Secret and restart
 
 ```bash
 oc -n ambient-code create secret generic frontend-oauth-config \
@@ -43,7 +44,7 @@ oc -n ambient-code create secret generic frontend-oauth-config \
 oc -n ambient-code rollout restart deployment/frontend
 ```
 
-4. Open the app: `oc -n ambient-code get route frontend-route -o jsonpath='{.spec.host}' | sed 's#^#https://#'`
+1. Open the app: `oc -n ambient-code get route frontend-route -o jsonpath='{.spec.host}' | sed 's#^#https://#'`
 
 ### Prerequisites
 
@@ -74,14 +75,14 @@ ROUTE_HOST=$(oc -n ambient-code get route frontend -o jsonpath='{.spec.host}')
 echo "$ROUTE_HOST"
 ```
 
-2. Generate a strong client secret:
+1. Generate a strong client secret:
 
 ```bash
 SECRET="$(openssl rand -base64 32 | tr -d '\n=+/0OIl')"
 echo "$SECRET"
 ```
 
-3. Create or update the OAuthClient:
+1. Create or update the OAuthClient:
 
 ```bash
 cat <<EOF | oc apply -f -
@@ -96,7 +97,7 @@ grantMethod: auto
 EOF
 ```
 
-4. Verify:
+1. Verify:
 
 ```bash
 oc get oauthclient ambient-frontend -o jsonpath='{.secret}{"\n"}{.redirectURIs[0]}{"\n"}'

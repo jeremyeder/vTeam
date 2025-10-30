@@ -14,8 +14,8 @@ This guide explains how to configure a GitHub App for vTeam so users can browse 
 1. Go to GitHub → Settings → Developer settings → GitHub Apps → New GitHub App
 2. Use these base settings:
    - GitHub App name: vTeam (or your own)
-   - Homepage URL: your frontend route (e.g., <https://ambient-code>.<apps-domain>)
-   - Callback URL (optional if using user OAuth verification): https://<frontend>/api/auth/github/user/callback
+   - Homepage URL: your frontend route (e.g., `https://ambient-code.<apps-domain>`)
+   - Callback URL (optional if using user OAuth verification): `https://<frontend>/api/auth/github/user/callback`
    - Webhook: Not required
 3. Repository permissions (minimum):
    - Contents: Read and write (required for clone/push)

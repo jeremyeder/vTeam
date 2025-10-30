@@ -50,7 +50,7 @@ Now let's create your first RFE using natural language.
 
 1. **Start with a basic description** in the chat:
 
-   ```
+   ```text
    I want to add a dark mode toggle to our application. Users should be able to switch between light and dark themes, and their preference should be saved.
    ```
 
@@ -69,19 +69,19 @@ The AI will guide you through refining your requirements. Respond to its questio
 
 **When asked about application type:**
 
-```
+```text
 This is a web-based project management application built with React. We have about 5,000 active users who work in different time zones.
 ```
 
 **When asked about toggle placement:**
 
-```
+```text
 The toggle should be in the user settings page, but also accessible from the main navigation bar for quick switching.
 ```
 
 **When asked about design requirements:**
 
-```
+```text
 We want to follow our existing design system. Dark mode should use our brand colors - dark gray (#2D3748) backgrounds with white text, and our signature blue (#3182CE) for accents.
 ```
 

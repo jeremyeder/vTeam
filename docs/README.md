@@ -29,7 +29,7 @@ ls site/
 
 ## Documentation Structure
 
-```
+```text
 docs/
 ├── index.md                 # Landing page
 ├── user-guide/

@@ -132,7 +132,7 @@ graph TD
 
 ### Code Organization
 
-```
+```text
 vTeam/
 ├── components/
 │   ├── backend/                # Go REST API
