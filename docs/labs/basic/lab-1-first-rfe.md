@@ -251,7 +251,6 @@ Ready to dig deeper?
 - **Try a more complex RFE**: Multi-step workflow or integration feature
 - **Explore agent reasoning**: Review detailed agent analysis for insights
 - **Compare approaches**: Create the same RFE using the form interface
-- **Next lab**: [Lab 2: Agent Interaction Deep Dive](lab-2-agent-interaction.md)
 
 ## Success Criteria ✅
 
@@ -263,7 +262,3 @@ You've successfully completed Lab 1 when:
 - [ ] Can explain the value of AI-assisted refinement
 
 **Congratulations!** You've experienced the power of AI-assisted requirement refinement. Your dark mode RFE is now ready for sprint planning and implementation.
-
----
-
-**Next**: Ready to understand how agents collaborate? Continue with [Lab 2: Agent Interaction Deep Dive](lab-2-agent-interaction.md)

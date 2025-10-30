@@ -5,6 +5,7 @@ This document explains how the vTeam Claude Code runner works and details all th
 ## How the Claude Code Runner Works
 
 ### Core Architecture
+
 The Claude Code runner (`components/runners/claude-code-runner/`) runs inside a Kubernetes Job created by the operator for each `AgenticSession`. It orchestrates AI-powered sessions by:
 
 1. **Execution Environment**: Runs Claude Code CLI in a Kubernetes pod with workspace persistence
@@ -16,20 +17,24 @@ The Claude Code runner (`components/runners/claude-code-runner/`) runs inside a 
 ### Key Components
 
 #### 1. **Runner Wrapper** (`wrapper.py`)
+
 - **Session Management**: Manages session lifecycle, status updates, workspace sync
 - **Claude Agent SDK Integration**: Invokes the Claude Agent SDK with configured tools and permissions
 - **Mode Switching**: Handles both interactive chat and headless execution
 - **Result Processing**: Captures and reports session results back to Kubernetes API
 
 #### 2. **Agent System** (`agent_loader.py`)
+
 - **Agent Personas**: Loads 16 specialized AI agents from YAML configurations
 - **Dynamic Prompting**: Generates role-specific prompts for spec-kit workflows
 - **Multi-Perspective Analysis**: Each agent provides domain-specific analysis
 
 #### 3. **Spec-Kit Integration**
+
 Handled via prompts and workflow tooling at a higher level; the runner focuses on session orchestration and SDK integration.
 
 #### 4. **Git Integration** (in `wrapper.py`)
+
 - **Authentication**: Uses short-lived GitHub tokens from the backend or project secrets
 - **Repository Management**: Clones input repositories into the workspace (multi-repo supported)
 - **Branch Operations**: Commits changes, pushes to output remotes, and optionally creates PRs
@@ -39,11 +44,13 @@ Handled via prompts and workflow tooling at a higher level; the runner focuses o
 ### 1. **Core System Prompts** (main.py)
 
 **Primary Claude Code System Prompt Enhancement:**
+
 ```python
 append_system_prompt=self.prompt + "\n\nALWAYS consult sub agents to help with this task."
 ```
 
 **Display Name Generation Prompt:**
+
 ```python
 system_prompt = (
     "You are a helpful assistant that creates concise, descriptive names for tasks. "
@@ -59,6 +66,7 @@ user_prompt = (
 Each agent has a `systemMessage` that defines their personality and role:
 
 **Engineering Manager (Emma):**
+
 ```yaml
 systemMessage: |
   You are Emma, an Engineering Manager with expertise in team leadership and strategic planning.
@@ -67,6 +75,7 @@ systemMessage: |
 ```
 
 **Staff Engineer (Stella):**
+
 ```yaml
 systemMessage: |
   You are Stella, a Staff Engineer with expertise in technical leadership and implementation excellence.
@@ -75,6 +84,7 @@ systemMessage: |
 ```
 
 **UX Researcher (Ryan):**
+
 ```yaml
 systemMessage: |
   You are Ryan, a UX Researcher with expertise in user insights and evidence-based design.
@@ -85,6 +95,7 @@ systemMessage: |
 ### 3. **Agent Analysis Prompts** (agent_loader.py)
 
 **Dynamic Agent Prompt Generation for Spec-Kit Phases:**
+
 ```python
 def get_spek_kit_prompt(self, phase: str, user_input: str) -> str:
     base_prompt = f"""You are {self.name}, {self.system_message}
@@ -100,6 +111,7 @@ User input: {user_input}
 **Phase-Specific Prompts:**
 
 **/specify phase:**
+
 ```python
 return base_prompt + f"""
 Please execute the /specify command with these requirements and create a comprehensive specification from your {self.role.lower()} perspective.
@@ -115,6 +127,7 @@ Use the spek-kit /specify command to create the specification, then enhance it w
 ```
 
 **/plan phase:**
+
 ```python
 return base_prompt + f"""
 Please execute the /plan command and create a detailed implementation plan from your {self.role.lower()} perspective.
@@ -132,6 +145,7 @@ Use the spek-kit /plan command to create the plan, then enhance it with your dom
 ### 4. **Spec-Kit Command Prompts** (spek_kit_integration.py)
 
 **Specification Creation Prompt:**
+
 ```python
 claude_prompt = f"""You are working in a spek-kit project. Please execute the /specify command with these requirements:
 
@@ -150,6 +164,7 @@ Follow the spek-kit workflow:
 Each agent has an `analysisPrompt.template` for structured analysis:
 
 **Example from Engineering Manager:**
+
 ```yaml
 analysisPrompt:
   template: |
@@ -216,6 +231,7 @@ This creates a sophisticated multi-agent system where each AI persona brings dom
 ## Session Flow
 
 ### Headless Mode (One-shot execution)
+
 1. **Initialization**: Load environment, setup workspace, configure Git
 2. **Agent Injection**: Load selected agent personas into Claude Code's agent system
 3. **Prompt Enhancement**: Append "ALWAYS consult sub agents to help with this task."
@@ -224,6 +240,7 @@ This creates a sophisticated multi-agent system where each AI persona brings dom
 6. **Status Update**: Report completion status back to Kubernetes API
 
 ### Interactive Mode (Chat-based)
+
 1. **Initialization**: Same as headless mode
 2. **Chat Loop**: Monitor inbox for user messages, process with Claude Code
 3. **Agent Consultation**: Claude Code can invoke specific agent personas as needed
@@ -233,6 +250,7 @@ This creates a sophisticated multi-agent system where each AI persona brings dom
 ## Configuration
 
 ### Environment Variables
+
 - `PROMPT`: Initial user prompt for the session
 - `INTERACTIVE`: Enable chat mode (`"true"`, `"1"`, `"yes"`)
 - `CLAUDE_PERMISSION_MODE`: Claude Code permission mode (default: `"acceptEdits"`)
@@ -240,6 +258,7 @@ This creates a sophisticated multi-agent system where each AI persona brings dom
 - `GIT_REPOSITORIES`: JSON array of repositories to clone
 
 ### Tools Available to Claude Code
+
 - `Read`, `Write`: File operations
 - `Bash`: Shell command execution
 - `Glob`, `Grep`: File searching and pattern matching

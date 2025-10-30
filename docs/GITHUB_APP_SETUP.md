@@ -14,7 +14,7 @@ This guide explains how to configure a GitHub App for vTeam so users can browse 
 1. Go to GitHub → Settings → Developer settings → GitHub Apps → New GitHub App
 2. Use these base settings:
    - GitHub App name: vTeam (or your own)
-   - Homepage URL: your frontend route (e.g., https://ambient-code.<apps-domain>)
+   - Homepage URL: your frontend route (e.g., <https://ambient-code>.<apps-domain>)
    - Callback URL (optional if using user OAuth verification): https://<frontend>/api/auth/github/user/callback
    - Webhook: Not required
 3. Repository permissions (minimum):
@@ -34,11 +34,13 @@ Set these environment variables on the backend Deployment (the manifests read th
 - GITHUB_PRIVATE_KEY: The PEM contents; raw PEM or base64-encoded PEM are both supported
 
 Optional (for user OAuth verification flow):
+
 - GITHUB_CLIENT_ID: OAuth app client ID for the GitHub App
 - GITHUB_CLIENT_SECRET: OAuth app client secret
 - GITHUB_STATE_SECRET: A random secret used to sign state (e.g., a long random string)
 
 Example (base64-encoding PEM for easy env injection):
+
 ```bash
 openssl genrsa -out app.pem 4096
 # or download the PEM from the GitHub App page
@@ -59,6 +61,7 @@ Apply your changes and restart the backend so it loads the new env vars.
 - Choose the account/org and repositories to grant access (at least the repos you will browse/clone/push)
 
 When redirected back, the frontend links the installation by calling the backend endpoint:
+
 - POST /api/auth/github/install
 
 The backend stores a mapping of the current user to their installation in a ConfigMap (`github-app-installations`) in the backend namespace.

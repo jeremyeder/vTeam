@@ -22,6 +22,7 @@ See `docs/OPENSHIFT_DEPLOY.md` to deploy on OpenShift, and `docs/OPENSHIFT_OAUTH
 
 ## Where to next
 
-- Developer overview: `docs/developer-guide/index.md`
-- API reference: `docs/reference/api-endpoints.md`
-- User guide: `docs/user-guide/index.md`
+- [User Guide](user-guide/index.md) - Getting started with vTeam
+- [Developer Guide](developer-guide/index.md) - Technical architecture and development
+- [Labs](labs/index.md) - Hands-on exercises
+- [Reference](reference/index.md) - Technical reference and glossary

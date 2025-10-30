@@ -11,21 +11,25 @@ vTeam is an OpenShift-native platform that deploys a backend API, frontend, and 
 ## Quick Deploy
 
 1. **Deploy** (from project root):
+
    ```bash
    # Prepare env once
    cp components/manifests/env.example components/manifests/.env
    # Edit .env and set ANTHROPIC_API_KEY
    make deploy
    ```
+
    This deploys to the `ambient-code` namespace using default images from quay.io/ambient_code.
 
 2. **Verify deployment**:
+
    ```bash
    oc get pods -n ambient-code
    oc get services -n ambient-code
    ```
 
 3. **Access the UI**:
+
    ```bash
    # Get the route URL
    oc get route frontend-route -n ambient-code
@@ -37,13 +41,17 @@ vTeam is an OpenShift-native platform that deploys a backend API, frontend, and 
 ## Configuration
 
 ### Customizing Namespace
+
 To deploy to a different namespace:
+
 ```bash
 make deploy NAMESPACE=my-namespace
 ```
 
 ### Building Custom Images
+
 To build and use your own images:
+
 ```bash
 # Set your container registry
 export REGISTRY="quay.io/your-username"
@@ -60,7 +68,9 @@ make deploy CONTAINER_REGISTRY=$REGISTRY
 ```
 
 ### Advanced Configuration
+
 Create and edit environment file for detailed customization:
+
 ```bash
 cd components/manifests
 cp env.example .env
@@ -68,9 +78,11 @@ cp env.example .env
 ```
 
 ### Setting up API Keys
+
 After deployment, configure runner secrets through Settings → Runner Secrets in the UI. At minimum, provide `ANTHROPIC_API_KEY`.
 
 ### OpenShift OAuth (Recommended)
+
 For cluster login and authentication, see [OpenShift OAuth Setup](OPENSHIFT_OAUTH.md). The deploy script also supports a `secrets` subcommand if you only need to (re)configure OAuth secrets:
 
 ```bash
