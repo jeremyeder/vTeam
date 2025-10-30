@@ -51,6 +51,7 @@ func registerRoutes(r *gin.Engine, jiraHandler *jira.Handler) {
 			projectGroup.GET("/rfe-workflows", handlers.ListProjectRFEWorkflows)
 			projectGroup.POST("/rfe-workflows", handlers.CreateProjectRFEWorkflow)
 			projectGroup.GET("/rfe-workflows/:id", handlers.GetProjectRFEWorkflow)
+			projectGroup.PUT("/rfe-workflows/:id", handlers.UpdateProjectRFEWorkflow)
 			projectGroup.GET("/rfe-workflows/:id/summary", handlers.GetProjectRFEWorkflowSummary)
 			projectGroup.DELETE("/rfe-workflows/:id", handlers.DeleteProjectRFEWorkflow)
 			projectGroup.POST("/rfe-workflows/:id/seed", handlers.SeedProjectRFEWorkflow)
@@ -85,6 +86,9 @@ func registerRoutes(r *gin.Engine, jiraHandler *jira.Handler) {
 		api.GET("/auth/github/status", handlers.GetGitHubStatusGlobal)
 		api.POST("/auth/github/disconnect", handlers.DisconnectGitHubGlobal)
 		api.GET("/auth/github/user/callback", handlers.HandleGitHubUserOAuthCallback)
+
+		// Cluster info endpoint (public, no auth required)
+		api.GET("/cluster-info", handlers.GetClusterInfo)
 
 		api.GET("/projects", handlers.ListProjects)
 		api.POST("/projects", handlers.CreateProject)
