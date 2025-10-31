@@ -1,7 +1,7 @@
 // Bot management types for the Ambient Agentic Runner frontend
 // Extends the project.ts types with detailed bot management functionality
 
-export interface BotConfig {
+export type BotConfig = {
   name: string;
   description?: string;
   enabled: boolean;
@@ -10,26 +10,26 @@ export interface BotConfig {
   lastUsed?: string;
 }
 
-export interface CreateBotRequest {
+export type CreateBotRequest = {
   name: string;
   description?: string;
   enabled?: boolean;
 }
 
-export interface UpdateBotRequest {
+export type UpdateBotRequest = {
   description?: string;
   enabled?: boolean;
 }
 
-export interface BotListResponse {
+export type BotListResponse = {
   items: BotConfig[];
 }
 
-export interface BotResponse {
+export type BotResponse = {
   bot: BotConfig;
 }
 
-export interface User {
+export type User = {
   id: string;
   username: string;
   roles: string[];
@@ -51,13 +51,13 @@ export enum Permission {
 }
 
 // Form validation types
-export interface BotFormData {
+export type BotFormData = {
   name: string;
   description: string;
   enabled: boolean;
 }
 
-export interface BotFormErrors {
+export type BotFormErrors = {
   name?: string;
   description?: string;
   enabled?: string;
@@ -71,7 +71,7 @@ export enum BotStatus {
 }
 
 // API error response
-export interface ApiError {
+export type ApiError = {
   message: string;
   code?: string;
   details?: string;

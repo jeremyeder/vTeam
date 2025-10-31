@@ -1,6 +1,6 @@
 // Core types for RFE Workflows and GitHub integration
 
-export interface Project {
+export type Project = {
   name: string;
   displayName: string;
   description?: string;
@@ -8,9 +8,9 @@ export interface Project {
   annotations: Record<string, string>;
   creationTimestamp: string;
   status: string;
-}
+};
 
-export interface Workspace {
+export type Workspace = {
   id: string;
   workspaceSlug: string;
   upstreamRepoUrl: string;
@@ -21,9 +21,9 @@ export interface Workspace {
   createdByUserId: string;
   createdAt: string;
   project: string;
-}
+};
 
-export interface Session {
+export type Session = {
   id: string;
   workspaceId: string;
   userId: string;
@@ -38,17 +38,17 @@ export interface Session {
   startedAt: string;
   finishedAt?: string;
   project: string;
-}
+};
 
-export interface PRLink {
+export type PRLink = {
   repoUrl: string;
   branch: string;
   targetBranch: string;
   url: string;
   status: 'open' | 'merged' | 'closed';
-}
+};
 
-export interface GitHubFork {
+export type GitHubFork = {
   name: string;
   fullName: string;
   url: string;
@@ -58,34 +58,34 @@ export interface GitHubFork {
   };
   private: boolean;
   default_branch: string;
-}
+};
 
-export interface RepoTree {
+export type RepoTree = {
   path?: string;
   entries: RepoEntry[];
-}
+};
 
-export interface RepoEntry {
+export type RepoEntry = {
   name: string;
   type: 'blob' | 'tree';
   size?: number;
   sha?: string;
-}
+};
 
-export interface RepoBlob {
+export type RepoBlob = {
   content: string;
   encoding: string;
   size: number;
-}
+};
 
-export interface GitHubInstallation {
+export type GitHubInstallation = {
   installationId: number;
   githubUserId: string;
   login: string;
   avatarUrl?: string;
-}
+};
 
-export interface SessionMessage {
+export type SessionMessage = {
   seq: number;
   type: string;
   timestamp: string;
@@ -96,17 +96,17 @@ export interface SessionMessage {
     total: number;
     data: string;
   };
-}
+};
 
-export interface UserAccess {
+export type UserAccess = {
   user: string;
   project: string;
   access: 'view' | 'edit' | 'admin' | 'none';
   allowed: boolean;
-}
+};
 
-export interface APIError {
+export type APIError = {
   error: string;
   code?: string;
   details?: Record<string, unknown>;
-}
+};

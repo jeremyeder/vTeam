@@ -1,7 +1,7 @@
 // Project types for the Ambient Agentic Runner frontend
 // Based on the OpenAPI contract specifications from backend tests
 
-export interface ObjectMeta {
+export type ObjectMeta = {
   name: string;
   namespace?: string;
   labels?: Record<string, string>;
@@ -11,7 +11,7 @@ export interface ObjectMeta {
   uid?: string;
 }
 
-export interface BotAccount {
+export type BotAccount = {
   name: string;
   description?: string;
 }
@@ -30,7 +30,7 @@ export type PermissionAssignment = {
   grantedBy?: string;
 };
 
-export interface Model {
+export type Model = {
   name: string;
   displayName: string;
   costPerToken: number;
@@ -38,26 +38,26 @@ export interface Model {
   default?: boolean;
 }
 
-export interface ResourceLimits {
+export type ResourceLimits = {
   cpu: string;
   memory: string;
   storage: string;
   maxDurationMinutes: number;
 }
 
-export interface Integration {
+export type Integration = {
   type: string;
   enabled: boolean;
 }
 
-export interface AvailableResources {
+export type AvailableResources = {
   models: Model[];
   resourceLimits: ResourceLimits;
   priorityClasses: string[];
   integrations: Integration[];
 }
 
-export interface ProjectDefaults {
+export type ProjectDefaults = {
   model: string;
   temperature: number;
   maxTokens: number;
@@ -65,7 +65,7 @@ export interface ProjectDefaults {
   priorityClass: string;
 }
 
-export interface ProjectConstraints {
+export type ProjectConstraints = {
   maxConcurrentSessions: number;
   maxSessionsPerUser: number;
   maxCostPerSession: number;
@@ -74,7 +74,7 @@ export interface ProjectConstraints {
   allowBotAccounts: boolean;
 }
 
-export interface AmbientProjectSpec {
+export type AmbientProjectSpec = {
   displayName: string;
   description?: string;
   bots?: BotAccount[];
@@ -84,12 +84,12 @@ export interface AmbientProjectSpec {
   constraints: ProjectConstraints;
 }
 
-export interface CurrentUsage {
+export type CurrentUsage = {
   activeSessions: number;
   totalCostToday: number;
 }
 
-export interface ProjectCondition {
+export type ProjectCondition = {
   type: string;
   status: string;
   reason?: string;
@@ -97,7 +97,7 @@ export interface ProjectCondition {
   lastTransitionTime?: string;
 }
 
-export interface AmbientProjectStatus {
+export type AmbientProjectStatus = {
   phase?: string;
   botsCreated?: number;
   groupBindingsCreated?: number;
@@ -120,7 +120,7 @@ export type Project = {
 };
 
 
-export interface CreateProjectRequest {
+export type CreateProjectRequest = {
   name: string;
   displayName?: string; // Optional: only used on OpenShift
   description?: string; // Optional: only used on OpenShift
