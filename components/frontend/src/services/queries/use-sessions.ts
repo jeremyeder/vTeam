@@ -5,7 +5,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as sessionsApi from '../api/sessions';
 import type {
-  AgenticSession,
   CreateAgenticSessionRequest,
   StopAgenticSessionRequest,
   CloneAgenticSessionRequest,
@@ -44,15 +43,7 @@ export function useSession(projectName: string, sessionName: string) {
     queryKey: sessionKeys.detail(projectName, sessionName),
     queryFn: () => sessionsApi.getSession(projectName, sessionName),
     enabled: !!projectName && !!sessionName,
-    // Poll for status updates on running sessions
-    refetchInterval: (query) => {
-      const session = query.state.data as AgenticSession | undefined;
-      const isRunning =
-        session?.status?.phase === 'Running' ||
-        session?.status?.phase === 'Creating' ||
-        session?.status?.phase === 'Pending';
-      return isRunning ? 5000 : false; // Poll every 5 seconds if running
-    },
+    // WebSocket handles real-time updates - no polling needed
   });
 }
 

@@ -43,6 +43,7 @@ import {
   workspaceKeys,
 } from "@/services/queries";
 import { successToast, errorToast } from "@/hooks/use-toast";
+import { useSessionWebSocket } from "@/hooks/use-session-websocket";
 import { workspaceApi } from "@/services/api";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -89,6 +90,13 @@ export default function ProjectSessionDetailPage({
   const pushToGitHubMutation = usePushSessionToGitHub();
   const abandonChangesMutation = useAbandonSessionChanges();
   const writeWorkspaceFileMutation = useWriteWorkspaceFile();
+
+  // WebSocket connection for real-time updates
+  useSessionWebSocket(projectName, sessionName, {
+    enabled: !!projectName && !!sessionName,
+    onConnect: () => console.log("[Session] WebSocket connected"),
+    onError: (err) => console.error("[Session] WebSocket error:", err),
+  });
 
   // Workspace state
   const [wsSelectedPath, setWsSelectedPath] = useState<string | undefined>();
